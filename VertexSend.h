@@ -1,3 +1,5 @@
+#define VS_FLOWER_POINTS 360
+
 typedef struct ssine
 {
     float speed;
@@ -38,6 +40,8 @@ void VS_Stars2d(float distance, float size, int i0, int i1);
 void VS_Pisina(float height1, float height2);
 void VS_PisinaGrid(float xsize, float ysize, float xpos, float ypos, float tscale, float height);
 void VS_WannabeCaustics(int texn, float px, float py, float hgt);
+
+void VS_Prepare_Blob_TC(int count);
 void VS_Flower(flower flo);
 void VS_SkyBox();
 float VS_FontWrite(char c, float xcp, float ycp, float z);
@@ -46,4 +50,3 @@ float VS_FontWrite2(char c, float xcp, float ycp, float z);
 void VS_TextWrite2(char *text, float xtp, float ytp, float z);
 void VS_Fade1(unsigned char fdc, float bsize);
 void VS_Fade2(unsigned char fdc, float bsize);
-void VS_Tile(float xpos, float ypos, float blend);

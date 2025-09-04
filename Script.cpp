@@ -275,25 +275,20 @@ void RunPart()
 
 void FpsCount()
 {
-	static int kkk=0;
-	static char oof[256];
+	static char fpsStr[16];
 
 	if (globalTime-atime>=1000)
 		{
 		atime = SDL_GetTicks();
-		//mmo=((kk-fps)+mo)>>1;
-		//mo=(kk-fps);
-		//fps=kk;
+		mmo=((kk-fps)+mo)>>1;
+		mo=(kk-fps);
+		fps=kk;
 
-		mo = kkk - fps;
-		fps = kkk;
-
-		itoa(mo, oof, 10);
-		SDL_WM_SetCaption(oof, oof);
+		itoa(mo, fpsStr, 10);
+		SDL_WM_SetCaption(fpsStr, fpsStr);
 	}
-	//if (mmo<20) mmo=20;
-	//if (mmo>400) mmo=400;
-	++kkk;
+	if (mmo<20) mmo=20;
+	if (mmo>400) mmo=400;
 }
 
 void RunScript()

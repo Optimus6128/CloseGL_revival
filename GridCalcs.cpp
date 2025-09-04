@@ -98,6 +98,7 @@ unsigned char sphb[spx*spy];
 const float pi=3.14151693f;
 const float d2r=180.0f/pi;
 
+
 // ======== Polar ========
 
 void GC_Polar(int nfx)
@@ -450,28 +451,33 @@ void GC_Water()
 
 void GC_Spherical()
 {
-	//float qwe;
-	float ro, phi, theta;
+	int i=0;
+	float d2r4=d2r*4.0f;
+	const float gt = (float)globalTime;
 
-		int i=0;
-		float d2r4=d2r*4.0f;
-
-		for (theta=0.0f; theta<360.0f; theta+=(360.0f/spx))
+	for (float theta=0.0f; theta<360.0f; theta+=(360.0f/spx))
+	{
+		const float ro0 = sinf((gt+theta*32.0f)/d2r4)*4.0f + 40.0f;
+		const float cth = cosf(theta/d2r);
+		const float sth = sinf(theta/d2r);
+		for (float phi=0.0f; phi<180.0f; phi+=(180.0f/spy))
 		{
-		  float ro0 = (float)sin(((float)globalTime+theta*32.0f)/d2r4)*4.0f + 40.0f;
-		  float cth = (float)cos(theta/d2r);
-		  float sth = (float)sin(theta/d2r);
-			for (phi=0.0f; phi<180.0f; phi+=(180.0f/spy))
-			{
-				ro = ro0 + (float)sin(((float)globalTime+phi*32.0f)/d2r4)*8.0f;
+			const float ii = (float)i;
+			const float ro = ro0 + sinf((gt+phi*32.0f)/d2r4)*8.0f;
 
-				sphx[i]= ro * (float)sin(phi/d2r) * cth * ((float)sin(globalTime/276.0f)*0.3f+1.0f);
-				sphy[i]= ro * (float)sin(phi/d2r) * sth * ((float)sin(globalTime/376.0f)*0.2f+1.0f);
-				sphz[i]= ro * (float)cos(phi/d2r) * ((float)sin(globalTime/176.0f)*0.1f+1.0f);
+			const float px = ro * sinf(phi/d2r) * cth * (sinf(gt/276.0f)*0.3f+1.0f);
+			const float py = ro * sinf(phi/d2r) * sth * (sinf(gt/376.0f)*0.2f+1.0f);
+			const float pz = ro * cosf(phi/d2r) * (sinf(gt/176.0f)*0.1f+1.0f);
 
-				sphr[i]=(unsigned char)(sphx[i]+128+(float)sin((3*sphx[i]+sphy[(int)(i+(float)globalTime/64.0f)])/12.0f)*64.0f);
-				sphg[i]=(unsigned char)(sphy[i]+128+(float)sin((sphx[(int)(i+(float)globalTime/32.0f)]+2*sphy[i])/8.0f)*64.0f);
-				sphb[i++]=(unsigned char)(sphx[i]+(float)sin((sphx[i]+3*sphy[i])/16.0f)*32+(float)sin((4*sphx[i]+2*sphy[i])/8.0f)*32.0f+128.0f);
-			}
+			sphx[i]= px;
+			sphy[i]= py;
+			sphz[i]= pz;
+
+			sphr[i]=(unsigned char)(px+128+sinf((3*px+sphy[(int)(ii+gt/64.0f)])/12.0f)*64.0f);
+			sphg[i]=(unsigned char)(py+128+sinf((sphx[(int)(ii+gt/32.0f)]+2*py)/8.0f)*64.0f);
+			sphb[i]=(unsigned char)(px+sinf((px+3*py)/16.0f)*32+sinf((4*px+2*py)/8.0f)*32.0f+128.0f);
+
+			++i;
 		}
+	}
 }

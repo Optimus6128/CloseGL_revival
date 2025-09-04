@@ -173,9 +173,15 @@ void P_Plasma()
 		glBindTexture(GL_TEXTURE_2D, texture[4]);
 		char *demoname="CloseGL";
 
+		glBegin(GL_QUADS);
+
 		glColor4ub(255,255,255,255);
-		for (int i=0; i<7; i++)
+		for (int i=0; i<7; i++) {
 			VS_FontWrite(*demoname++, sin((prt+i*128.0f)/256.0f)*8.0f+i*4.0f-8.0f + fontx[i], cos((prt+i*32.0f)/256.0f)*4.0f+4.0f + fonty[i], -30.0f);
+		}
+
+		glEnd();
+
 		glDisable(GL_TEXTURE_2D);
 	}
 
@@ -473,14 +479,13 @@ void P_Stars()
 
 	VS_Stars3d();
 
-	VS_Blob_Begin();
+	VS_Prepare_Blob_TC(1024);	// 1024=STARS, overtakes 360=FLOWER POINTS
+
 	for (i=0; i<NSHAPES; i++)
 	{
-		shape[i].zfp=-((int)((i*(256/NSHAPES))+globalTime/32.0f)%256);
+		shape[i].zfp=-((int)((i*(256/NSHAPES))+globalTime/32.0f) & 255);
 		VS_Flower(shape[i]);
 	}
-	VS_Blob_End();
-
 }
 
 
@@ -489,7 +494,7 @@ void P_Water()
 
 	int prt=globalTime-partime;
 
-	if ((globalTime-wft)>32)
+	if ((globalTime-wft)>1)
 	{	wft=SDL_GetTicks();
 		kl++;
 		GC_Water();
@@ -573,15 +578,15 @@ void P_Water()
 
 
 	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_LIGHTING);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 
 	if (prt<8192.0f)
 	{
 		float ablend;
-		for (int y=0; y<6; y++)
-			for (int x=0; x<6; x++)
-			{
+		for (int y=0; y<6; y++) {
+			for (int x=0; x<6; x++) {
 				ablend=(8192.0f-(float)prt)/8192.0f;
 				blockblend[x][y]=(float)(x+y+8-((float)prt/8192.0f)*32.0f)/4.0f-ablend;
 				if (blockblend[x][y]>1.0f) blockblend[x][y]=1.0f;
@@ -592,11 +597,19 @@ void P_Water()
 				glRotatef(90.0f*(1.0f - blockblend[x][y]),0.0f,0.0f,1.0f);
 				glRotatef(90.0f*(1.0f - blockblend[x][y]),0.0f,1.0f,0.0f);
 
-				VS_Tile(-4.0f, -3.0f, blockblend[x][y]);
+				glBegin(GL_QUADS);
+				glColor4f(1.0f, 1.0f, 1.0f, blockblend[x][y]);
+				glVertex3f(-4.0f, -3.0f, -15.0f);
+				glVertex3f(0.0f, -3.0f, -15.0f);
+				glVertex3f(0.0f, 0.0f, -15.0f);
+				glVertex3f(-4.0f, 0.0f, -15.0f);
+				glEnd();
 			}
 			tz0=tz;
 			rx0=rx;
+		}
 	}
+	glEnable(GL_LIGHTING);
 
 	if (prt>=8192.0f && prt<16384.0f)
 	{
@@ -654,6 +667,7 @@ void P_Water()
 
 void P_Spherical()
 {
+	static bool test = true;
 	int prt=globalTime-partime;
 
 	float ty,epi;

@@ -15,6 +15,10 @@
 #include "VertexSend.h"
 #include "Parts.h"
 
+
+#define PI 3.14151693f
+#define D2R (180.0f / PI)
+
 const int nqx=128;
 const int nqy=96; //nqx/ratio; (An einai dynaton!)
 
@@ -98,10 +102,91 @@ extern unsigned char sphg[spx*spy];
 extern unsigned char sphb[spx*spy];
 
 
-const float pi=3.14151693;
-const float d2r=180.0/pi;
+// Tables to pass for Vertex Arrays
+#define MAX_ARRAY_SIZE 65536
+
+static float glArrayVertices[3 * MAX_ARRAY_SIZE];
+static unsigned char glArrayColors3ub[3 * MAX_ARRAY_SIZE];
+static float glArrayColors3f[3 * MAX_ARRAY_SIZE];
+static float glArrayTexcoords[2 * MAX_ARRAY_SIZE];
+static float glArrayNormals[3 * MAX_ARRAY_SIZE];
+
+static float *glArrayVerticesPtr;
+static unsigned char *glArrayColors3ubPtr;
+static float *glArrayColors3fPtr;
+static float *glArrayTexcoordsPtr;
+static float *glArrayNormalsPtr;
+
+#define M_glVertex3f(x,y,z) *glArrayVerticesPtr++ = (x); *glArrayVerticesPtr++ = (y); *glArrayVerticesPtr++ = (z);
+#define M_glColor3ub(r,g,b) *glArrayColors3ubPtr++ = (r); *glArrayColors3ubPtr++ = (g); *glArrayColors3ubPtr++ = (b);
+#define M_glColor3f(r,g,b) *glArrayColors3fPtr++ = (r); *glArrayColors3fPtr++ = (g); *glArrayColors3fPtr++ = (b);
+#define M_glTexCoord2f(u,v) *glArrayTexcoordsPtr++ = (u); *glArrayTexcoordsPtr++ = (v);
+#define M_glNormal3f(x,y,z) *glArrayNormalsPtr++ = (x); *glArrayNormalsPtr++ = (y); *glArrayNormalsPtr++ = (z);
+
 
 // -------------------------------------------------------------------------------------
+
+static void initGlArrayPointers()
+{
+	glArrayVerticesPtr = glArrayVertices;
+	glArrayColors3ubPtr = glArrayColors3ub;
+	glArrayColors3fPtr = glArrayColors3f;
+	glArrayTexcoordsPtr = glArrayTexcoords;
+	glArrayNormalsPtr = glArrayNormals;
+}
+
+static void renderVertexArrays(int count, bool hasColors, bool hasTexcoords, bool hasNormals, bool colorsAreF = false, bool areTriangles = false)
+{
+	// Setup
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, glArrayVertices);
+
+	if (hasColors) {
+		if (colorsAreF) {
+			glEnableClientState(GL_COLOR_ARRAY);
+			glColorPointer(3, GL_FLOAT, 0, glArrayColors3f);
+		} else {
+			glEnableClientState(GL_COLOR_ARRAY);
+			glColorPointer(3, GL_UNSIGNED_BYTE, 0, glArrayColors3ub);
+		}
+	}
+
+	if (hasNormals) {
+		glEnableClientState(GL_NORMAL_ARRAY);
+		glNormalPointer(GL_FLOAT, 0, glArrayNormals);
+	}
+
+	if (hasTexcoords) {
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(2, GL_FLOAT, 0, glArrayTexcoords);
+	}
+
+
+	// Draw
+	
+	if (areTriangles) {
+		glDrawArrays(GL_TRIANGLES, 0, count);
+	} else {
+		glDrawArrays(GL_QUADS, 0, count);
+	}
+
+
+	// Clean up
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+
+	if (hasColors) {
+		glDisableClientState(GL_COLOR_ARRAY);
+	}
+	if (hasNormals) {
+		glDisableClientState(GL_NORMAL_ARRAY);
+	}
+	if (hasTexcoords) {
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+}
+
 
 // ======== FlatGrid ========
 
@@ -114,25 +199,27 @@ float VS_FontWrite2(char c, float xcp, float ycp, float z)
 	float xt=(fconv[c]*16.0f)/1024.0f;
 	float fd=16.0f/1024.0f;
 
-	glBegin(GL_QUADS);
-		glTexCoord2f(xt+fd, 1.0);
-		glVertex3f(xcp,ycp,z);
-		glTexCoord2f(xt, 1.0);
-		glVertex3f(xcp+fsize,ycp,z);
-		glTexCoord2f(xt, 0.0);
-		glVertex3f(xcp+fsize,ycp+fsize,z);
-		glTexCoord2f(xt+fd, 0.0f);
-		glVertex3f(xcp,ycp+fsize,z);
-	glEnd();
+	glTexCoord2f(xt+fd, 1.0);
+	glVertex3f(xcp,ycp,z);
+	glTexCoord2f(xt, 1.0);
+	glVertex3f(xcp+fsize,ycp,z);
+	glTexCoord2f(xt, 0.0);
+	glVertex3f(xcp+fsize,ycp+fsize,z);
+	glTexCoord2f(xt+fd, 0.0f);
+	glVertex3f(xcp,ycp+fsize,z);
 
 	return xcp-fsize;
 }
 
 void VS_TextWrite2(char *text, float xtp, float ytp, float z)
 {
+	glBegin(GL_QUADS);
+
 	do{
         xtp=VS_FontWrite2(*text++, xtp, ytp, z);
     }while(*(text)!=0);
+
+	glEnd();
 }
 
 
@@ -142,25 +229,27 @@ float VS_FontWrite(char c, float xcp, float ycp, float z)
 	float xt=(fconv[c]*16.0f)/1024.0f;
 	float fd=16.0f/1024.0f;
 
-	glBegin(GL_QUADS);
-		glTexCoord2f(xt+fd, 1.0);
-		glVertex3f(xcp,ycp,z);
-		glTexCoord2f(xt, 1.0);
-		glVertex3f(xcp+fsize,ycp,z);
-		glTexCoord2f(xt, 0.0);
-		glVertex3f(xcp+fsize,ycp+fsize,z);
-		glTexCoord2f(xt+fd, 0.0f);
-		glVertex3f(xcp,ycp+fsize,z);
-	glEnd();
+	glTexCoord2f(xt+fd, 1.0);
+	glVertex3f(xcp,ycp,z);
+	glTexCoord2f(xt, 1.0);
+	glVertex3f(xcp+fsize,ycp,z);
+	glTexCoord2f(xt, 0.0);
+	glVertex3f(xcp+fsize,ycp+fsize,z);
+	glTexCoord2f(xt+fd, 0.0f);
+	glVertex3f(xcp,ycp+fsize,z);
 
 	return xcp-fsize;
 }
 
 void VS_TextWrite(char *text, float xtp, float ytp, float z)
 {
+	glBegin(GL_QUADS);
+
 	do{
         xtp=VS_FontWrite(*text++, xtp, ytp, z);
     }while(*(text)!=0);
+
+	glEnd();
 }
 
 
@@ -191,78 +280,79 @@ void VS_Fade2(unsigned char fdc, float bsize)
 void VS_FlatGrid()
 {
 	int xq,yq;
+	int count = 0;
 
-	glBegin(GL_QUADS);
+	initGlArrayPointers();
 
-			int i=pqx+1;
-			for (int y=1; y<pqy-1; y+=2)
-			{
-				yq=y-(pqy>>1);
-				for (int x=1; x<pqx-1; x+=2)
-				{
-					xq=x-(pqx>>1);
+	int i=pqx+1;
+	for (int y=1; y<pqy-1; y+=2)
+	{
+		yq=y-(pqy>>1);
+		for (int x=1; x<pqx-1; x+=2)
+		{
+			xq=x-(pqx>>1);
 
-					glColor3ub(plgridr[i],plgridg[i],plgridb[i]);
-					glVertex3f(xq,yq,plgrida[i]);
+			M_glColor3ub(plgridr[i],plgridg[i],plgridb[i]);
+			M_glVertex3f(xq,yq,plgrida[i]);
 
-					glColor3ub(plgridr[i-1],plgridg[i-1],plgridb[i-1]);
-					glVertex3f(xq-1,yq,plgrida[i-1]);
+			M_glColor3ub(plgridr[i-1],plgridg[i-1],plgridb[i-1]);
+			M_glVertex3f(xq-1,yq,plgrida[i-1]);
 
-					glColor3ub(plgridr[i-1+pqx],plgridg[i-1+pqx],plgridb[i-1+pqx]);
-					glVertex3f(xq-1,yq+1,plgrida[i-1+pqx]);
+			M_glColor3ub(plgridr[i-1+pqx],plgridg[i-1+pqx],plgridb[i-1+pqx]);
+			M_glVertex3f(xq-1,yq+1,plgrida[i-1+pqx]);
 
-					glColor3ub(plgridr[i+pqx],plgridg[i+pqx],plgridb[i+pqx]);
-					glVertex3f(xq,yq+1,plgrida[i+pqx]);
-
-
-					glColor3ub(plgridr[i],plgridg[i],plgridb[i]);
-					glVertex3f(xq,yq,plgrida[i]);
-
-					glColor3ub(plgridr[i+pqx],plgridg[i+pqx],plgridb[i+pqx]);
-					glVertex3f(xq,yq+1,plgrida[i+pqx]);
-
-					glColor3ub(plgridr[i+pqx+1],plgridg[i+pqx+1],plgridb[i+pqx+1]);
-					glVertex3f(xq+1,yq+1,plgrida[i+pqx+1]);
-
-					glColor3ub(plgridr[i+1],plgridg[i+1],plgridb[i+1]);
-					glVertex3f(xq+1,yq,plgrida[i+1]);
+			M_glColor3ub(plgridr[i+pqx],plgridg[i+pqx],plgridb[i+pqx]);
+			M_glVertex3f(xq,yq+1,plgrida[i+pqx]);
 
 
+			M_glColor3ub(plgridr[i],plgridg[i],plgridb[i]);
+			M_glVertex3f(xq,yq,plgrida[i]);
 
-					glColor3ub(plgridr[i],plgridg[i],plgridb[i]);
-					glVertex3f(xq,yq,plgrida[i]);
+			M_glColor3ub(plgridr[i+pqx],plgridg[i+pqx],plgridb[i+pqx]);
+			M_glVertex3f(xq,yq+1,plgrida[i+pqx]);
 
-					glColor3ub(plgridr[i+1],plgridg[i+1],plgridb[i+1]);
-					glVertex3f(xq+1,yq,plgrida[i+1]);
+			M_glColor3ub(plgridr[i+pqx+1],plgridg[i+pqx+1],plgridb[i+pqx+1]);
+			M_glVertex3f(xq+1,yq+1,plgrida[i+pqx+1]);
 
-					glColor3ub(plgridr[i+1-pqx],plgridg[i+1-pqx],plgridb[i+1-pqx]);
-					glVertex3f(xq+1,yq-1,plgrida[i+1-pqx]);
-
-					glColor3ub(plgridr[i-pqx],plgridg[i-pqx],plgridb[i-pqx]);
-					glVertex3f(xq,yq-1,plgrida[i-pqx]);
-
-
-					glColor3ub(plgridr[i],plgridg[i],plgridb[i]);
-					glVertex3f(xq,yq,plgrida[i]);
-
-					glColor3ub(plgridr[i-pqx],plgridg[i-pqx],plgridb[i-pqx]);
-					glVertex3f(xq,yq-1,plgrida[i-pqx]);
-
-					glColor3ub(plgridr[i-pqx-1],plgridg[i-pqx-1],plgridb[i-pqx-1]);
-					glVertex3f(xq-1,yq-1,plgrida[i-pqx-1]);
-
-					glColor3ub(plgridr[i-1],plgridg[i-1],plgridb[i-1]);
-					glVertex3f(xq-1,yq,plgrida[i-1]);
+			M_glColor3ub(plgridr[i+1],plgridg[i+1],plgridb[i+1]);
+			M_glVertex3f(xq+1,yq,plgrida[i+1]);
 
 
-					i+=2;
-				}
-				i+=pqx+2;
-				
-			}
+
+			M_glColor3ub(plgridr[i],plgridg[i],plgridb[i]);
+			M_glVertex3f(xq,yq,plgrida[i]);
+
+			M_glColor3ub(plgridr[i+1],plgridg[i+1],plgridb[i+1]);
+			M_glVertex3f(xq+1,yq,plgrida[i+1]);
+
+			M_glColor3ub(plgridr[i+1-pqx],plgridg[i+1-pqx],plgridb[i+1-pqx]);
+			M_glVertex3f(xq+1,yq-1,plgrida[i+1-pqx]);
+
+			M_glColor3ub(plgridr[i-pqx],plgridg[i-pqx],plgridb[i-pqx]);
+			M_glVertex3f(xq,yq-1,plgrida[i-pqx]);
 
 
-		glEnd();
+			M_glColor3ub(plgridr[i],plgridg[i],plgridb[i]);
+			M_glVertex3f(xq,yq,plgrida[i]);
+
+			M_glColor3ub(plgridr[i-pqx],plgridg[i-pqx],plgridb[i-pqx]);
+			M_glVertex3f(xq,yq-1,plgrida[i-pqx]);
+
+			M_glColor3ub(plgridr[i-pqx-1],plgridg[i-pqx-1],plgridb[i-pqx-1]);
+			M_glVertex3f(xq-1,yq-1,plgrida[i-pqx-1]);
+
+			M_glColor3ub(plgridr[i-1],plgridg[i-1],plgridb[i-1]);
+			M_glVertex3f(xq-1,yq,plgrida[i-1]);
+
+			count += 4;
+
+			i+=2;
+		}
+		i+=pqx+2;
+		
+	}
+
+	renderVertexArrays(4 * count, true, false, false);
 }
 
 
@@ -270,82 +360,82 @@ void VS_FlatGrid()
 void VS_FlatGridNew(int face)
 {
 	float *pgx, *pgy, *pgz;
+	int count = 0;
 
 	pgx=&gx[face][1+gqx];
 	pgy=&gy[face][1+gqx];
 	pgz=&gz[face][1+gqx];
 
-	glBegin(GL_QUADS);
+	initGlArrayPointers();
+
+	int i=1+gqx;
+	for (int y=1; y<gqy-1; y+=2)
+	{
+		for (int x=1; x<gqx-1; x+=2)
+		{
+
+			M_glColor3ub(pgridr[i],pgridg[i],pgridb[i]);
+			M_glVertex3f(*pgx,*pgy,*pgz);
+
+			M_glColor3ub(pgridr[i-1],pgridg[i-1],pgridb[i-1]);
+			M_glVertex3f(*(pgx-1),*(pgy-1),*(pgz-1));
+
+			M_glColor3ub(pgridr[i-1+gqx],pgridg[i-1+gqx],pgridb[i-1+gqx]);
+			M_glVertex3f(*(pgx-1+gqx),*(pgy-1+gqx),*(pgz-1+gqx));
+
+			M_glColor3ub(pgridr[i+gqx],pgridg[i+gqx],pgridb[i+gqx]);
+			M_glVertex3f(*(pgx+gqx),*(pgy+gqx),*(pgz+gqx));
 
 
-			int i=1+gqx;
-			for (int y=1; y<gqy-1; y+=2)
-			{
-				for (int x=1; x<gqx-1; x+=2)
-				{
+			M_glColor3ub(pgridr[i],pgridg[i],pgridb[i]);
+			M_glVertex3f(*pgx,*pgy,*pgz);
 
-					glColor3ub(pgridr[i],pgridg[i],pgridb[i]);
-					glVertex3f(*pgx,*pgy,*pgz);
+			M_glColor3ub(pgridr[i+gqx],pgridg[i+gqx],pgridb[i+gqx]);
+			M_glVertex3f(*(pgx+gqx),*(pgy+gqx),*(pgz+gqx));
 
-					glColor3ub(pgridr[i-1],pgridg[i-1],pgridb[i-1]);
-					glVertex3f(*(pgx-1),*(pgy-1),*(pgz-1));
+			M_glColor3ub(pgridr[i+gqx+1],pgridg[i+gqx+1],pgridb[i+gqx+1]);
+			M_glVertex3f(*(pgx+1+gqx),*(pgy+1+gqx),*(pgz+1+gqx));
 
-					glColor3ub(pgridr[i-1+gqx],pgridg[i-1+gqx],pgridb[i-1+gqx]);
-					glVertex3f(*(pgx-1+gqx),*(pgy-1+gqx),*(pgz-1+gqx));
-
-					glColor3ub(pgridr[i+gqx],pgridg[i+gqx],pgridb[i+gqx]);
-					glVertex3f(*(pgx+gqx),*(pgy+gqx),*(pgz+gqx));
-
-
-					glColor3ub(pgridr[i],pgridg[i],pgridb[i]);
-					glVertex3f(*pgx,*pgy,*pgz);
-
-					glColor3ub(pgridr[i+gqx],pgridg[i+gqx],pgridb[i+gqx]);
-					glVertex3f(*(pgx+gqx),*(pgy+gqx),*(pgz+gqx));
-
-					glColor3ub(pgridr[i+gqx+1],pgridg[i+gqx+1],pgridb[i+gqx+1]);
-					glVertex3f(*(pgx+1+gqx),*(pgy+1+gqx),*(pgz+1+gqx));
-
-					glColor3ub(pgridr[i+1],pgridg[i+1],pgridb[i+1]);
-					glVertex3f(*(pgx+1),*(pgy+1),*(pgz+1));
+			M_glColor3ub(pgridr[i+1],pgridg[i+1],pgridb[i+1]);
+			M_glVertex3f(*(pgx+1),*(pgy+1),*(pgz+1));
 
 
 
-					glColor3ub(pgridr[i],pgridg[i],pgridb[i]);
-					glVertex3f(*pgx,*pgy,*pgz);
+			M_glColor3ub(pgridr[i],pgridg[i],pgridb[i]);
+			M_glVertex3f(*pgx,*pgy,*pgz);
 
-					glColor3ub(pgridr[i+1],pgridg[i+1],pgridb[i+1]);
-					glVertex3f(*(pgx+1),*(pgy+1),*(pgz+1));
+			M_glColor3ub(pgridr[i+1],pgridg[i+1],pgridb[i+1]);
+			M_glVertex3f(*(pgx+1),*(pgy+1),*(pgz+1));
 
-					glColor3ub(pgridr[i+1-gqx],pgridg[i+1-gqx],pgridb[i+1-gqx]);
-					glVertex3f(*(pgx+1-gqx),*(pgy+1-gqx),*(pgz+1-gqx));
+			M_glColor3ub(pgridr[i+1-gqx],pgridg[i+1-gqx],pgridb[i+1-gqx]);
+			M_glVertex3f(*(pgx+1-gqx),*(pgy+1-gqx),*(pgz+1-gqx));
 
-					glColor3ub(pgridr[i-gqx],pgridg[i-gqx],pgridb[i-gqx]);
-					glVertex3f(*(pgx-gqx),*(pgy-gqx),*(pgz-gqx));
-
-
-					glColor3ub(pgridr[i],pgridg[i],pgridb[i]);
-					glVertex3f(*pgx,*pgy,*pgz);
-
-					glColor3ub(pgridr[i-gqx],pgridg[i-gqx],pgridb[i-gqx]);
-					glVertex3f(*(pgx-gqx),*(pgy-gqx),*(pgz-gqx));
-
-					glColor3ub(pgridr[i-gqx-1],pgridg[i-gqx-1],pgridb[i-gqx-1]);
-					glVertex3f(*(pgx-1-gqx),*(pgy-1-gqx),*(pgz-1-gqx));
-
-					glColor3ub(pgridr[i-1],pgridg[i-1],pgridb[i-1]);
-					glVertex3f(*(pgx-1),*(pgy-1),*(pgz-1));
+			M_glColor3ub(pgridr[i-gqx],pgridg[i-gqx],pgridb[i-gqx]);
+			M_glVertex3f(*(pgx-gqx),*(pgy-gqx),*(pgz-gqx));
 
 
-					i+=2;
-					pgx+=2; pgy+=2; pgz+=2;
-				}
-				i+=(gqx+2);
-				pgx+=(gqx+2); pgy+=(gqx+2); pgz+=(gqx+2);
-			}
+			M_glColor3ub(pgridr[i],pgridg[i],pgridb[i]);
+			M_glVertex3f(*pgx,*pgy,*pgz);
 
+			M_glColor3ub(pgridr[i-gqx],pgridg[i-gqx],pgridb[i-gqx]);
+			M_glVertex3f(*(pgx-gqx),*(pgy-gqx),*(pgz-gqx));
 
-		glEnd();
+			M_glColor3ub(pgridr[i-gqx-1],pgridg[i-gqx-1],pgridb[i-gqx-1]);
+			M_glVertex3f(*(pgx-1-gqx),*(pgy-1-gqx),*(pgz-1-gqx));
+
+			M_glColor3ub(pgridr[i-1],pgridg[i-1],pgridb[i-1]);
+			M_glVertex3f(*(pgx-1),*(pgy-1),*(pgz-1));
+
+			count += 4;
+
+			i+=2;
+			pgx+=2; pgy+=2; pgz+=2;
+		}
+		i+=(gqx+2);
+		pgx+=(gqx+2); pgy+=(gqx+2); pgz+=(gqx+2);
+	}
+
+	renderVertexArrays(4 * count, true, false, false);
 }
 
 
@@ -363,44 +453,80 @@ void VS_Floor(float y, float xsize, float zsize, float sdiv)
 	float f=0.1f;
 
 	float speed=globalTime/512.0f;
+	int count = 0;
 
 	glBindTexture(GL_TEXTURE_2D, texture[2]);
 
- 	glBegin(GL_QUADS);
-	
-		for (z=z0; z<z1; z+=dz)
-			for (x=x0; x<x1; x+=dx)
-			{
-				glColor3f(1-z/zsize, 1-z/zsize, 1-z/zsize);
+ 	initGlArrayPointers();
 
-				glTexCoord2f(x/(xsize*f),z/(zsize*f)+speed);
-				glVertex3f(x,y,-z);
+	for (z=z0; z<z1; z+=dz) {
+		const float cz = 1-z/zsize;
+		for (x=x0; x<x1; x+=dx) {
+			M_glColor3f(cz, cz, cz);
+			M_glTexCoord2f(x/(xsize*f),z/(zsize*f)+speed);
+			M_glVertex3f(x,y,-z);
 
-				glTexCoord2f((x+dx)/(xsize*f),z/(zsize*f)+speed);
-				glVertex3f(x+dx,y,-z);
+			M_glColor3f(cz, cz, cz);
+			M_glTexCoord2f((x+dx)/(xsize*f),z/(zsize*f)+speed);
+			M_glVertex3f(x+dx,y,-z);
 
-				glTexCoord2f((x+dx)/(xsize*f),(z+dz)/(zsize*f)+speed);
-				glVertex3f(x+dx,y,-z-dz);
+			M_glColor3f(cz, cz, cz);
+			M_glTexCoord2f((x+dx)/(xsize*f),(z+dz)/(zsize*f)+speed);
+			M_glVertex3f(x+dx,y,-z-dz);
 
-				glTexCoord2f(x/(xsize*f),(z+dz)/(zsize*f)+speed);
-				glVertex3f(x,y,-z-dz);
-			}
-	glEnd();
+			M_glColor3f(cz, cz, cz);
+			M_glTexCoord2f(x/(xsize*f),(z+dz)/(zsize*f)+speed);
+			M_glVertex3f(x,y,-z-dz);
+
+			++count;
+		}
+	}
+
+	renderVertexArrays(4 * count, true, true, false, true);
 }
 
 
 void VS_Stars2d(float distance, float size, int i0, int i1)
 {
-	VS_Blob_Begin();
+	int count = 0;
+
+	glBindTexture(GL_TEXTURE_2D, texture[5]);
+
+	initGlArrayPointers();
 
 	for (int i=i0; i<i1; i++)
 	{
 		starx[i]+=starspeed[i];
 		if (starx[i]<-1024.0f) starx[i]=1024.0f;
-		VS_Blob(starx[i], stary[i], starz[i]+distance, starcolr[i], starcolg[i], starcolb[i], size);
+		
+		const float x = starx[i];
+		const float y = stary[i];
+		const float z = starz[i] + distance;
+
+		const unsigned char r = starcolr[i];
+		const unsigned char g = starcolg[i];
+		const unsigned char b = starcolb[i];
+
+		M_glColor3ub(r,g,b);
+		M_glTexCoord2f(0,0);
+		M_glVertex3f(-size+x,-size+y,z);
+
+		M_glColor3ub(r,g,b);
+		M_glTexCoord2f(1,0);
+		M_glVertex3f(size+x,-size+y,z);
+
+		M_glColor3ub(r,g,b);
+		M_glTexCoord2f(1,1);
+		M_glVertex3f(size+x,size+y,z);
+
+		M_glColor3ub(r,g,b);
+		M_glTexCoord2f(0,1);
+		M_glVertex3f(-size+x,size+y,z);
+
+		++count;
 	}
 
-	VS_Blob_End();
+	renderVertexArrays(4 * count, true, true, false);
 }
 
 
@@ -409,104 +535,49 @@ void VS_Stars2d(float distance, float size, int i0, int i1)
 void VS_Distort()
 {
 	int i,x,y;
+	int count = 0;
 
 	float tpx=0, tpy=0;
 	float dpx=1.0/nqx, dpy=1.0/nqy;
 
-	switch (wire)
+	glBindTexture(GL_TEXTURE_2D, texture[0]);
+
+	initGlArrayPointers();
+
+	i=0;
+	for (y=0; y<nqy-1; y++)
 	{
-	case false:
+		tpx=0;
 
-		glBindTexture(GL_TEXTURE_2D, texture[0]);
-
-		glBegin(GL_QUADS);
-
-			i=0;
-			for (y=0; y<nqy-1; y++)
-			{
-				tpx=0;
-
-				for (x=0; x<nqx-1; x++)
-				{
-					glTexCoord2f(tpx,tpy);
-					glVertex3f(gridx[i],gridy[i],gridz[i]);
-					glColor3ub(gridr[i],gridg[i],gridb[i]);
-
-					glTexCoord2f(tpx+dpx,tpy);
-					glVertex3f(gridx[i+1],gridy[i+1],gridz[i+1]);
-					glColor3ub(gridr[i+1],gridg[i+1],gridb[i+1]);
-
-					glTexCoord2f(tpx+dpx,tpy+dpy);
-					glVertex3f(gridx[i+1+nqx],gridy[i+1+nqx],gridz[i+1+nqx]);
-					glColor3ub(gridr[i+1+nqx],gridg[i+1+nqx],gridb[i+1+nqx]);
-
-					glTexCoord2f(tpx,tpy+dpy);
-					glVertex3f(gridx[i+nqx],gridy[i+nqx],gridz[i+nqx]);
-					glColor3ub(gridr[i+nqx],gridg[i+nqx],gridb[i+nqx]);
+		for (x=0; x<nqx-1; x++)
+		{
+			M_glTexCoord2f(tpx,tpy);
+			M_glVertex3f(gridx[i],gridy[i],gridz[i]);
+			M_glColor3ub(gridr[i+nqx],gridg[i+nqx],gridb[i+nqx]);
 
 
-					i++;
-					tpx+=dpx;
-				}
-				i++;
-				tpy+=dpy;
-			}
+			M_glTexCoord2f(tpx+dpx,tpy);
+			M_glVertex3f(gridx[i+1],gridy[i+1],gridz[i+1]);
+			M_glColor3ub(gridr[i],gridg[i],gridb[i]);
 
-		glEnd();
-	break;
+			M_glTexCoord2f(tpx+dpx,tpy+dpy);
+			M_glVertex3f(gridx[i+1+nqx],gridy[i+1+nqx],gridz[i+1+nqx]);
+			M_glColor3ub(gridr[i+1],gridg[i+1],gridb[i+1]);
 
-	case true:
+			M_glTexCoord2f(tpx,tpy+dpy);
+			M_glVertex3f(gridx[i+nqx],gridy[i+nqx],gridz[i+nqx]);
+			M_glColor3ub(gridr[i+1+nqx],gridg[i+1+nqx],gridb[i+1+nqx]);
 
-		glBindTexture(GL_TEXTURE_2D, texture[0]);
+			++count;
 
-		glBegin(GL_LINES);
-
-		glColor3ub(255,255,255);
-
-			i=0;
-			for (y=0; y<nqy-1; y++)
-			{
-				tpx=0;
-
-				for (x=0; x<nqx-1; x++)
-				{
-					glTexCoord2f(tpx,tpy);
-					glVertex3d(gridx[i],gridy[i],gridz[i]);
-
-					glTexCoord2f(tpx+dpx,tpy);
-					glVertex3d(gridx[i+1],gridy[i+1],gridz[i+1]);
-
-					glTexCoord2f(tpx+dpx,tpy);
-					glVertex3d(gridx[i+1],gridy[i+1],gridz[i+1]);
-
-					glTexCoord2f(tpx+dpx,tpy+dpy);
-					glVertex3d(gridx[i+1+nqx],gridy[i+1+nqx],gridz[i+1+nqx]);
-
-					glTexCoord2f(tpx+dpx,tpy+dpy);
-					glVertex3d(gridx[i+1+nqx],gridy[i+1+nqx],gridz[i+1+nqx]);
-
-					glTexCoord2f(tpx,tpy+dpy);
-					glVertex3d(gridx[i+nqx],gridy[i+nqx],gridz[i+nqx]);
-
-					glTexCoord2f(tpx,tpy+dpy);
-					glVertex3d(gridx[i+nqx],gridy[i+nqx],gridz[i+nqx]);
-
-					glTexCoord2f(tpx,tpy);
-					glVertex3d(gridx[i],gridy[i],gridz[i]);
-
-					i++;
-					tpx+=dpx;
-				}
-				i++;
-				tpy+=dpy;
-			}
-
-		glEnd();
-	break;
-
-	default:
-		break;
+			i++;
+			tpx+=dpx;
+		}
+		i++;
+		tpy+=dpy;
 	}
+
+	renderVertexArrays(4 * count, true, true, false);
 }
 
 
@@ -627,20 +698,21 @@ void VS_ObjectShow(int way)
 
 
 		case 2:
-			glBegin(GL_TRIANGLES);
+			initGlArrayPointers();
+
 			for (i=0; i<npls; i++)
 			{
+				M_glNormal3f(pnv[pp0[i]].x,pnv[pp0[i]].y,pnv[pp0[i]].z);
+				M_glVertex3f(xo[pp0[i]],yo[pp0[i]],zo[pp0[i]]);
 
-				glNormal3f(pnv[pp0[i]].x,pnv[pp0[i]].y,pnv[pp0[i]].z);
-				glVertex3f(xo[pp0[i]],yo[pp0[i]],zo[pp0[i]]);
+				M_glNormal3f(pnv[pp1[i]].x,pnv[pp1[i]].y,pnv[pp1[i]].z);
+				M_glVertex3f(xo[pp1[i]],yo[pp1[i]],zo[pp1[i]]);
 
-				glNormal3f(pnv[pp1[i]].x,pnv[pp1[i]].y,pnv[pp1[i]].z);
-				glVertex3f(xo[pp1[i]],yo[pp1[i]],zo[pp1[i]]);
-
-				glNormal3f(pnv[pp2[i]].x,pnv[pp2[i]].y,pnv[pp2[i]].z);
-				glVertex3f(xo[pp2[i]],yo[pp2[i]],zo[pp2[i]]);
+				M_glNormal3f(pnv[pp2[i]].x,pnv[pp2[i]].y,pnv[pp2[i]].z);
+				M_glVertex3f(xo[pp2[i]],yo[pp2[i]],zo[pp2[i]]);
 			}
-			glEnd();
+
+			renderVertexArrays(3 * npls, false, false, true, false, true);
 		break;
 
 		default:
@@ -651,7 +723,7 @@ void VS_ObjectShow(int way)
 }
 
 
-void RenderLight()
+/*void RenderLight()
 {
 	glDisable(GL_LIGHTING);
 	glEnable(GL_BLEND);
@@ -662,42 +734,82 @@ void RenderLight()
 	glEnable(GL_LIGHTING);
 	glDisable(GL_BLEND);
 	glDisable(GL_TEXTURE_2D);
-}
+}*/
 
 
 void VS_Stars3d()
 {
-	float mulc;
+	initGlArrayPointers();
 
-	VS_Blob_Begin();
+	glBindTexture(GL_TEXTURE_2D, texture[5]);
+
+	const float bsize = 1.5f;
+
 	for (int i=0; i<1024; i++)
 	{
-		mulc=(256.0f+star[i].z)/256.0f;
-		VS_Blob(star[i].x, star[i].y, star[i].z, star[i].rcol*mulc, star[i].gcol*mulc, star[i].bcol*mulc, 1.5f);
+		const float mulc=(256.0f+star[i].z)/256.0f;
+		const float x = star[i].x;
+		const float y = star[i].y;
+		const float z = star[i].z;
+		const unsigned char r = (unsigned char)(star[i].rcol*mulc);
+		const unsigned char g = (unsigned char)(star[i].gcol*mulc);
+		const unsigned char b = (unsigned char)(star[i].bcol*mulc);
+
+		M_glColor3ub(r,g,b);
+		M_glVertex3f(-bsize+x,-bsize+y,z);
+
+		M_glColor3ub(r,g,b);
+		M_glVertex3f(bsize+x,-bsize+y,z);
+
+		M_glColor3ub(r,g,b);
+		M_glVertex3f(bsize+x,bsize+y,z);
+
+		M_glColor3ub(r,g,b);
+		M_glVertex3f(-bsize+x,bsize+y,z);
 	}
-	VS_Blob_End();
+
+	renderVertexArrays(4 * 1024, true, true, false);
 }
 
+void VS_Prepare_Blob_TC(int count)
+{
+	glArrayTexcoordsPtr = glArrayTexcoords;
+
+	for (int th = 0; th < count; ++th) {
+		*glArrayTexcoordsPtr++ = 0; *glArrayTexcoordsPtr++ = 0;
+		*glArrayTexcoordsPtr++ = 1; *glArrayTexcoordsPtr++ = 0;
+		*glArrayTexcoordsPtr++ = 1; *glArrayTexcoordsPtr++ = 1;
+		*glArrayTexcoordsPtr++ = 0; *glArrayTexcoordsPtr++ = 1;
+	}
+}
 
 void VS_Flower(flower flo)
 {
-	float ro,theta;
-	float theta2ub=360.0f/256.0f;
-	float thk=globalTime/128.0f;
-	float fx,fy,fz;
+	const float thk=globalTime / 128.0f;
+	float const mulc = (256.0f + flo.zfp) / 256.0f;
+	const float bsize = 1.35f;
 
-	float mulc = (256.0f+flo.zfp)/256.0f;
+	initGlArrayPointers();
 
-	float flthetastep=1.0f;
+	glColor3ub(	(unsigned char)((255.0f/flo.rdiv)*mulc), 
+				(unsigned char)((255.0f/flo.gdiv)*mulc), 
+				(unsigned char)((255.0f/flo.bdiv)*mulc));
 
-	for (theta=0; theta<360; theta+=flthetastep)
+	for (int th = 0; th < VS_FLOWER_POINTS; ++th)
 	{
-		ro=sin((theta + flo.tmul1 * thk)/(d2r/flo.angdiv1)) * flo.sinmul1 + cos((theta + flo.tmul2 * thk)/(d2r/flo.angdiv2)) * flo.sinmul2 + flo.fsize;
-		fx=ro*cos(theta/d2r) + flo.xfp;
-		fy=ro*sin(theta/d2r) + flo.yfp;
-		fz=flo.zfp;
-		VS_Blob(fx, fy, fz, (255.0f/flo.rdiv)*mulc, (255.0f/flo.gdiv)*mulc, (255.0f/flo.bdiv)*mulc, 1.35f);
+		const float theta = (float)th;
+		const float ro = sin((theta + flo.tmul1 * thk)/(D2R/flo.angdiv1)) * flo.sinmul1 + cos((theta + flo.tmul2 * thk)/(D2R/flo.angdiv2)) * flo.sinmul2 + flo.fsize;
+		const float fx=ro*cos(theta/D2R) + flo.xfp;
+		const float fy=ro*sin(theta/D2R) + flo.yfp;
+		const float fz=flo.zfp;
+
+		M_glVertex3f(-bsize+fx,-bsize+fy, fz);
+		M_glVertex3f(bsize+fx,-bsize+fy, fz);
+		M_glVertex3f(bsize+fx,bsize+fy, fz);
+		M_glVertex3f(-bsize+fx,bsize+fy, fz);
 	}
+
+	renderVertexArrays(4*VS_FLOWER_POINTS, false, true, false);
 }
 
 void VS_Blob_Begin()
@@ -729,8 +841,61 @@ void VS_Blob(float x, float y, float z, unsigned char r, unsigned char g, unsign
 	glVertex3f(-bsize+x,bsize+y,z);
 }
 
-
+// We must do everything with element indices then it would be quite faster
 void VS_Water(int texn, float px, float py)
+{
+	int count = 0;
+
+	float tpx, tpy;
+	float dpx=2.0f/wqx, dpy=2.0f/wqy;
+
+	glBindTexture(GL_TEXTURE_2D, texture[texn]);
+
+
+	initGlArrayPointers();
+
+	int i=wqx+1;
+	tpy=0.0f+py;
+
+	float yq = (float)(1-(wqy>>1));
+	for (int y=1; y<wqy-1; y++)
+	{
+		tpx=0.0f+px;
+		float xq = (float)(1-(wqx>>1));
+		for (int x=1; x<wqx-1; x++)
+		{
+			M_glTexCoord2f(tpx,tpy);
+			M_glNormal3f(nbufferx[i],nbuffery[i],nbufferz[i]);
+			M_glVertex3f(xq,yq,hbuffer[i]);
+
+			M_glTexCoord2f(tpx+dpx,tpy);
+			M_glNormal3f(nbufferx[i+1],nbuffery[i+1],nbufferz[i+1]);
+			M_glVertex3f(xq+1,yq,hbuffer[i+1]);
+
+			M_glTexCoord2f(tpx+dpx,tpy+dpy);
+			M_glNormal3f(nbufferx[i+1+wqx],nbuffery[i+1+wqx],nbufferz[i+1+wqx]);
+			M_glVertex3f(xq+1,yq+1,hbuffer[i+1+wqx]);
+
+			M_glTexCoord2f(tpx,tpy+dpy);
+			M_glNormal3f(nbufferx[i+wqx],nbuffery[i+wqx],nbufferz[i+wqx]);
+			M_glVertex3f(xq,yq+1,hbuffer[i+wqx]);
+
+			++count;
+
+			tpx+=dpx;
+			i++;
+			xq += 1;
+		}
+		yq += 1;
+		i+=2;
+		tpy+=dpy;
+	}
+
+	renderVertexArrays(4 * count, false, true, true);
+}
+
+// Why this one faster from above? Or above at least not improved?
+void VS_Water0(int texn, float px, float py)
 {
 	int xq,yq;
 
@@ -778,23 +943,6 @@ void VS_Water(int texn, float px, float py)
 		glEnd();
 
 //	RenderLight();
-}
-
-
-void VS_Tile(float xpos, float ypos, float blend)
-{
-	float xsize=4.0f, ysize=3.0f;
-	float z=-15.0f;
-
-	glDisable(GL_LIGHTING);
-	glColor4f(1.0f, 1.0f, 1.0f, blend);
-	glBegin(GL_QUADS);
-		glVertex3f(xpos, ypos, z);
-		glVertex3f(xpos+xsize, ypos, z);
-		glVertex3f(xpos+xsize, ypos+ysize, z);
-		glVertex3f(xpos, ypos+ysize, z);
-	glEnd();
-	glEnable(GL_LIGHTING);
 }
 
 
@@ -972,62 +1120,66 @@ void VS_WannabeCaustics(int texn, float px, float py, float hgt)
 	float dispx[wqx*wqy];
 	float dispy[wqx*wqy];
 
-		int i=wqx+1;
-		tpy=0.0f+py;
-		for (y=0; y<wqy; y+=jumps)
+	int count = 0;
+
+	int i=wqx+1;
+	tpy=0.0f+py;
+	for (y=0; y<wqy; y+=jumps)
+	{
+		tpx=0.0f+px;
+		yq=y-(wqy>>1);
+		for (x=0; x<wqx; x+=jumps)
 		{
-			tpx=0.0f+px;
-			yq=y-(wqy>>1);
-			for (x=0; x<wqx; x+=jumps)
-			{
-				xq=x-(wqx>>1);
+			xq=x-(wqx>>1);
 
-				dispx[i]=tpx+sin((y+globalTime/128.0f)/4.0f)*0.03f;
-				dispy[i]=tpy+sin((x+globalTime/192.0f)/4.0f)*0.05f;
+			dispx[i]=tpx+sin((y+globalTime/128.0f)/4.0f)*0.03f;
+			dispy[i]=tpy+sin((x+globalTime/192.0f)/4.0f)*0.05f;
 
-				tpx+=dpx;
-				i++;
-			}
-			tpy+=dpy;
+			tpx+=dpx;
+			i++;
 		}
+		tpy+=dpy;
+	}
 
 
 	glBindTexture(GL_TEXTURE_2D, texture[texn]);
 
-	glBegin(GL_QUADS);
+	initGlArrayPointers();
 
-			i=wqx+1;
-			tpy=0.0f+py;
-			for (y=1; y<wqy-1; y+=jumps)
-			{
-				yq=y-(wqy>>1);
-				for (x=1; x<wqx-1; x+=jumps)
-				{
-					xq=x-(wqx>>1);
+	i=wqx+1;
+	tpy=0.0f+py;
+	for (y=1; y<wqy-1; y+=jumps)
+	{
+		yq=y-(wqy>>1);
+		for (x=1; x<wqx-1; x+=jumps)
+		{
+			xq=x-(wqx>>1);
 
-					glTexCoord2f(dispx[i],dispy[i]);
-					glVertex3f(xq,yq,hgt);
+			M_glTexCoord2f(dispx[i],dispy[i]);
+			M_glVertex3f(xq,yq,hgt);
 
-					glTexCoord2f(dispx[i+1],dispy[i+1]);
-					glVertex3f(xq+jumps,yq,hgt);
+			M_glTexCoord2f(dispx[i+1],dispy[i+1]);
+			M_glVertex3f(xq+jumps,yq,hgt);
 
-					glTexCoord2f(dispx[i+shit+1],dispy[i+shit+1]);
-					glVertex3f(xq+jumps,yq+jumps,hgt);
+			M_glTexCoord2f(dispx[i+shit+1],dispy[i+shit+1]);
+			M_glVertex3f(xq+jumps,yq+jumps,hgt);
 
-					glTexCoord2f(dispx[i+shit],dispy[i+shit]);
-					glVertex3f(xq,yq+jumps,hgt);
+			M_glTexCoord2f(dispx[i+shit],dispy[i+shit]);
+			M_glVertex3f(xq,yq+jumps,hgt);
 
-					i++;
-				}
-			}
-		glEnd();
+			++count;
 
+			i++;
+		}
+	}
+
+	renderVertexArrays(4 * count, false, true, false);
 }
 
 
 void VS_Spherical()
 {
-	int xq,yq;
+	//int xq,yq;
 	int x,y;
 
 	float tpx, tpy;
@@ -1036,176 +1188,177 @@ void VS_Spherical()
 
 	glBindTexture(GL_TEXTURE_2D, texture[3]);
 
-	glBegin(GL_QUADS);
+	initGlArrayPointers();
 
-			tpy=0.0f;
-			int i=spx+1;
-			for (y=1; y<spy-1; y+=2)
-			{
+	tpy=0.0f;
+	int i=spx+1;
+	int count = 0;
+	for (y=1; y<spy-1; y+=2)
+	{
 
-				tpx=0.0f;
-				yq=y-(wqy>>1);
-				for (x=1; x<spx-1; x+=2)
-				{
-					xq=x-(wqx>>1);
+		tpx=0.0f;
+		//yq=y-(wqy>>1);
+		for (x=1; x<spx-1; x+=2)
+		{
+			//xq=x-(wqx>>1);
 
-					glTexCoord2f(tpx,tpy);
-					glColor3ub(sphr[i],sphg[i],sphb[i]);
-					glVertex3f(sphx[i],sphy[i],sphz[i]);
+			M_glTexCoord2f(tpx,tpy);
+			M_glColor3ub(sphr[i],sphg[i],sphb[i]);
+			M_glVertex3f(sphx[i],sphy[i],sphz[i]);
 
-					glTexCoord2f(tpx-dpx,tpy);
-					glColor3ub(sphr[i-1],sphg[i-1],sphb[i-1]);
-					glVertex3f(sphx[i-1],sphy[i-1],sphz[i-1]);
+			M_glTexCoord2f(tpx-dpx,tpy);
+			M_glColor3ub(sphr[i-1],sphg[i-1],sphb[i-1]);
+			M_glVertex3f(sphx[i-1],sphy[i-1],sphz[i-1]);
 
-					glTexCoord2f(tpx-dpx,tpy+dpy);
-					glColor3ub(sphr[i-1+spx],sphg[i-1+spx],sphb[i-1+spx]);
-					glVertex3f(sphx[i-1+spx],sphy[i-1+spx],sphz[i-1+spx]);
+			M_glTexCoord2f(tpx-dpx,tpy+dpy);
+			M_glColor3ub(sphr[i-1+spx],sphg[i-1+spx],sphb[i-1+spx]);
+			M_glVertex3f(sphx[i-1+spx],sphy[i-1+spx],sphz[i-1+spx]);
 
-					glTexCoord2f(tpx,tpy+dpy);
-					glColor3ub(sphr[i+spx],sphg[i+spx],sphb[i+spx]);
-					glVertex3f(sphx[i+spx],sphy[i+spx],sphz[i+spx]);
-
-
-					glTexCoord2f(tpx,tpy);
-					glColor3ub(sphr[i],sphg[i],sphb[i]);
-					glVertex3f(sphx[i],sphy[i],sphz[i]);
-
-					glTexCoord2f(tpx,tpy+dpy);
-					glColor3ub(sphr[i+spx],sphg[i+spx],sphb[i+spx]);
-					glVertex3f(sphx[i+spx],sphy[i+spx],sphz[i+spx]);
-
-					glTexCoord2f(tpx+dpx,tpy+dpy);
-					glColor3ub(sphr[i+spx+1],sphg[i+spx+1],sphb[i+spx+1]);
-					glVertex3f(sphx[i+spx+1],sphy[i+spx+1],sphz[i+spx+1]);
-
-					glTexCoord2f(tpx+dpx,tpy);
-					glColor3ub(sphr[i+1],sphg[i+1],sphb[i+1]);
-					glVertex3f(sphx[i+1],sphy[i+1],sphz[i+1]);
+			M_glTexCoord2f(tpx,tpy+dpy);
+			M_glColor3ub(sphr[i+spx],sphg[i+spx],sphb[i+spx]);
+			M_glVertex3f(sphx[i+spx],sphy[i+spx],sphz[i+spx]);
 
 
-					glTexCoord2f(tpx,tpy);
-					glColor3ub(sphr[i],sphg[i],sphb[i]);
-					glVertex3f(sphx[i],sphy[i],sphz[i]);
+			M_glTexCoord2f(tpx,tpy);
+			M_glColor3ub(sphr[i],sphg[i],sphb[i]);
+			M_glVertex3f(sphx[i],sphy[i],sphz[i]);
 
-					glTexCoord2f(tpx+dpx,tpy);
-					glColor3ub(sphr[i+1],sphg[i+1],sphb[i+1]);
-					glVertex3f(sphx[i+1],sphy[i+1],sphz[i+1]);
+			M_glTexCoord2f(tpx,tpy+dpy);
+			M_glColor3ub(sphr[i+spx],sphg[i+spx],sphb[i+spx]);
+			M_glVertex3f(sphx[i+spx],sphy[i+spx],sphz[i+spx]);
 
-					glTexCoord2f(tpx+dpx,tpy-dpy);
-					glColor3ub(sphr[i+1-spx],sphg[i+1-spx],sphb[i+1-spx]);
-					glVertex3f(sphx[i+1-spx],sphy[i+1-spx],sphz[i+1-spx]);
+			M_glTexCoord2f(tpx+dpx,tpy+dpy);
+			M_glColor3ub(sphr[i+spx+1],sphg[i+spx+1],sphb[i+spx+1]);
+			M_glVertex3f(sphx[i+spx+1],sphy[i+spx+1],sphz[i+spx+1]);
 
-					glTexCoord2f(tpx,tpy-dpy);
-					glColor3ub(sphr[i-spx],sphg[i-spx],sphb[i-spx]);
-					glVertex3f(sphx[i-spx],sphy[i-spx],sphz[i-spx]);
-
-
-					glTexCoord2f(tpx,tpy);
-					glColor3ub(sphr[i],sphg[i],sphb[i]);
-					glVertex3f(sphx[i],sphy[i],sphz[i]);
-
-					glTexCoord2f(tpx,tpy-dpy);
-					glColor3ub(sphr[i-spx],sphg[i-spx],sphb[i-spx]);
-					glVertex3f(sphx[i-spx],sphy[i-spx],sphz[i-spx]);
-
-					glTexCoord2f(tpx-dpx,tpy-dpy);
-					glColor3ub(sphr[i-spx-1],sphg[i-spx-1],sphb[i-spx-1]);
-					glVertex3f(sphx[i-spx-1],sphy[i-spx-1],sphz[i-spx-1]);
-
-					glTexCoord2f(tpx-dpx,tpy);
-					glColor3ub(sphr[i-1],sphg[i-1],sphb[i-1]);
-					glVertex3f(sphx[i-1],sphy[i-1],sphz[i-1]);
-
-					tpx+=(dpx*2);
-					i+=2;
-				}
-				tpy+=(dpy*2);
-				i+=spx+2;
-				
-			}
-
-	// correction
-
-			tpx=0.0f;
-				int j=(spy-1)*spx+1; i=1;
-				for (x=1; x<spx-1; x+=2)
-				{
-
-					glTexCoord2f(tpx,tpy-dpy);
-					glColor3ub(sphr[j-spx],sphg[j-spx],sphb[j-spx]);
-					glVertex3f(sphx[j-spx],sphy[j-spx],sphz[j-spx]);
-
-					glTexCoord2f(tpx+dpx,tpy-dpy);
-					glColor3ub(sphr[j-spx+1],sphg[j-spx+1],sphb[j-spx+1]);
-					glVertex3f(sphx[j-spx+1],sphy[j-spx+1],sphz[j-spx+1]);
-
-					glTexCoord2f(tpx+dpx,tpy);
-					glColor3ub(sphr[j+1],sphg[j+1],sphb[j+1]);
-					glVertex3f(sphx[j+1],sphy[j+1],sphz[j+1]);
-
-					glTexCoord2f(tpx,tpy);
-					glColor3ub(sphr[j],sphg[j],sphb[j]);
-					glVertex3f(sphx[j],sphy[j],sphz[j]);
+			M_glTexCoord2f(tpx+dpx,tpy);
+			M_glColor3ub(sphr[i+1],sphg[i+1],sphb[i+1]);
+			M_glVertex3f(sphx[i+1],sphy[i+1],sphz[i+1]);
 
 
-					glTexCoord2f(tpx,tpy-dpy);
-					glColor3ub(sphr[j-spx],sphg[j-spx],sphb[j-spx]);
-					glVertex3f(sphx[j-spx],sphy[j-spx],sphz[j-spx]);
+			M_glTexCoord2f(tpx,tpy);
+			M_glColor3ub(sphr[i],sphg[i],sphb[i]);
+			M_glVertex3f(sphx[i],sphy[i],sphz[i]);
 
-					glTexCoord2f(tpx,tpy);
-					glColor3ub(sphr[j],sphg[j],sphb[j]);
-					glVertex3f(sphx[j],sphy[j],sphz[j]);
+			M_glTexCoord2f(tpx+dpx,tpy);
+			M_glColor3ub(sphr[i+1],sphg[i+1],sphb[i+1]);
+			M_glVertex3f(sphx[i+1],sphy[i+1],sphz[i+1]);
 
-					glTexCoord2f(tpx-dpx,tpy);
-					glColor3ub(sphr[j-1],sphg[j-1],sphb[j-1]);
-					glVertex3f(sphx[j-1],sphy[j-1],sphz[j-1]);
+			M_glTexCoord2f(tpx+dpx,tpy-dpy);
+			M_glColor3ub(sphr[i+1-spx],sphg[i+1-spx],sphb[i+1-spx]);
+			M_glVertex3f(sphx[i+1-spx],sphy[i+1-spx],sphz[i+1-spx]);
 
-					glTexCoord2f(tpx-dpx,tpy-dpy);
-					glColor3ub(sphr[j-spx-1],sphg[j-spx-1],sphb[j-spx-1]);
-					glVertex3f(sphx[j-spx-1],sphy[j-spx-1],sphz[j-spx-1]);
-
-
-					glTexCoord2f(tpx,tpy);
-					glColor3ub(sphr[j],sphg[j],sphb[j]);
-					glVertex3f(sphx[j],sphy[j],sphz[j]);
-
-					glTexCoord2f(tpx+dpx,tpy);
-					glColor3ub(sphr[j+1],sphg[j+1],sphb[j+1]);
-					glVertex3f(sphx[j+1],sphy[j+1],sphz[j+1]);
-
-					glTexCoord2f(tpx+dpx,tpy+dpy);
-					glColor3ub(sphr[i+1],sphg[i+1],sphb[i+1]);
-					glVertex3f(sphx[i+1],sphy[i+1],sphz[i+1]);
-
-					glTexCoord2f(tpx,tpy+dpy);
-					glColor3ub(sphr[i],sphg[i],sphb[i]);
-					glVertex3f(sphx[i],sphy[i],sphz[i]);
+			M_glTexCoord2f(tpx,tpy-dpy);
+			M_glColor3ub(sphr[i-spx],sphg[i-spx],sphb[i-spx]);
+			M_glVertex3f(sphx[i-spx],sphy[i-spx],sphz[i-spx]);
 
 
-					glTexCoord2f(tpx,tpy);
-					glColor3ub(sphr[j],sphg[j],sphb[j]);
-					glVertex3f(sphx[j],sphy[j],sphz[j]);
+			M_glTexCoord2f(tpx,tpy);
+			M_glColor3ub(sphr[i],sphg[i],sphb[i]);
+			M_glVertex3f(sphx[i],sphy[i],sphz[i]);
 
-					glTexCoord2f(tpx,tpy+dpy);
-					glColor3ub(sphr[i],sphg[i],sphb[i]);
-					glVertex3f(sphx[i],sphy[i],sphz[i]);
+			M_glTexCoord2f(tpx,tpy-dpy);
+			M_glColor3ub(sphr[i-spx],sphg[i-spx],sphb[i-spx]);
+			M_glVertex3f(sphx[i-spx],sphy[i-spx],sphz[i-spx]);
 
-					glTexCoord2f(tpx-dpx,tpy+dpy);
-					glColor3ub(sphr[i-1],sphg[i-1],sphb[i-1]);
-					glVertex3f(sphx[i-1],sphy[i-1],sphz[i-1]);
+			M_glTexCoord2f(tpx-dpx,tpy-dpy);
+			M_glColor3ub(sphr[i-spx-1],sphg[i-spx-1],sphb[i-spx-1]);
+			M_glVertex3f(sphx[i-spx-1],sphy[i-spx-1],sphz[i-spx-1]);
 
-					glTexCoord2f(tpx-dpx,tpy);
-					glColor3ub(sphr[j-1],sphg[j-1],sphb[j-1]);
-					glVertex3f(sphx[j-1],sphy[j-1],sphz[j-1]);
+			M_glTexCoord2f(tpx-dpx,tpy);
+			M_glColor3ub(sphr[i-1],sphg[i-1],sphb[i-1]);
+			M_glVertex3f(sphx[i-1],sphy[i-1],sphz[i-1]);
 
-					tpx+=(dpx*2);
-					i+=2;
-					j+=2;
-				}
+			count += 4;
+			tpx+=(dpx*2);
+			i+=2;
+		}
+		tpy+=(dpy*2);
+		i+=spx+2;
+		
+	}
+
+// correction
+
+	tpx=0.0f;
+		int j=(spy-1)*spx+1; i=1;
+		for (x=1; x<spx-1; x+=2)
+		{
+
+			M_glTexCoord2f(tpx,tpy-dpy);
+			M_glColor3ub(sphr[j-spx],sphg[j-spx],sphb[j-spx]);
+			M_glVertex3f(sphx[j-spx],sphy[j-spx],sphz[j-spx]);
+
+			M_glTexCoord2f(tpx+dpx,tpy-dpy);
+			M_glColor3ub(sphr[j-spx+1],sphg[j-spx+1],sphb[j-spx+1]);
+			M_glVertex3f(sphx[j-spx+1],sphy[j-spx+1],sphz[j-spx+1]);
+
+			M_glTexCoord2f(tpx+dpx,tpy);
+			M_glColor3ub(sphr[j+1],sphg[j+1],sphb[j+1]);
+			M_glVertex3f(sphx[j+1],sphy[j+1],sphz[j+1]);
+
+			M_glTexCoord2f(tpx,tpy);
+			M_glColor3ub(sphr[j],sphg[j],sphb[j]);
+			M_glVertex3f(sphx[j],sphy[j],sphz[j]);
 
 
-		glEnd();
+			M_glTexCoord2f(tpx,tpy-dpy);
+			M_glColor3ub(sphr[j-spx],sphg[j-spx],sphb[j-spx]);
+			M_glVertex3f(sphx[j-spx],sphy[j-spx],sphz[j-spx]);
 
+			M_glTexCoord2f(tpx,tpy);
+			M_glColor3ub(sphr[j],sphg[j],sphb[j]);
+			M_glVertex3f(sphx[j],sphy[j],sphz[j]);
+
+			M_glTexCoord2f(tpx-dpx,tpy);
+			M_glColor3ub(sphr[j-1],sphg[j-1],sphb[j-1]);
+			M_glVertex3f(sphx[j-1],sphy[j-1],sphz[j-1]);
+
+			M_glTexCoord2f(tpx-dpx,tpy-dpy);
+			M_glColor3ub(sphr[j-spx-1],sphg[j-spx-1],sphb[j-spx-1]);
+			M_glVertex3f(sphx[j-spx-1],sphy[j-spx-1],sphz[j-spx-1]);
+
+
+			M_glTexCoord2f(tpx,tpy);
+			M_glColor3ub(sphr[j],sphg[j],sphb[j]);
+			M_glVertex3f(sphx[j],sphy[j],sphz[j]);
+
+			M_glTexCoord2f(tpx+dpx,tpy);
+			M_glColor3ub(sphr[j+1],sphg[j+1],sphb[j+1]);
+			M_glVertex3f(sphx[j+1],sphy[j+1],sphz[j+1]);
+
+			M_glTexCoord2f(tpx+dpx,tpy+dpy);
+			M_glColor3ub(sphr[i+1],sphg[i+1],sphb[i+1]);
+			M_glVertex3f(sphx[i+1],sphy[i+1],sphz[i+1]);
+
+			M_glTexCoord2f(tpx,tpy+dpy);
+			M_glColor3ub(sphr[i],sphg[i],sphb[i]);
+			M_glVertex3f(sphx[i],sphy[i],sphz[i]);
+
+
+			M_glTexCoord2f(tpx,tpy);
+			M_glColor3ub(sphr[j],sphg[j],sphb[j]);
+			M_glVertex3f(sphx[j],sphy[j],sphz[j]);
+
+			M_glTexCoord2f(tpx,tpy+dpy);
+			M_glColor3ub(sphr[i],sphg[i],sphb[i]);
+			M_glVertex3f(sphx[i],sphy[i],sphz[i]);
+
+			M_glTexCoord2f(tpx-dpx,tpy+dpy);
+			M_glColor3ub(sphr[i-1],sphg[i-1],sphb[i-1]);
+			M_glVertex3f(sphx[i-1],sphy[i-1],sphz[i-1]);
+
+			M_glTexCoord2f(tpx-dpx,tpy);
+			M_glColor3ub(sphr[j-1],sphg[j-1],sphb[j-1]);
+			M_glVertex3f(sphx[j-1],sphy[j-1],sphz[j-1]);
+
+			count += 4;
+			tpx+=(dpx*2);
+			i+=2;
+			j+=2;
+		}
+
+		renderVertexArrays(4 * count, true, true, false);
 }
 
 
@@ -1277,8 +1430,8 @@ void VS_CubeTest(point2d p0, point2d p1, point2d p2, point2d p3, float rcx, floa
 
 point2d VS_RotatePoint(point2d p, float rpx, float rpy, float rpz)
 {
-	float cosxr=cos(rpx/d2r); float cosyr=cos(rpy/d2r); float coszr=cos(rpz/d2r);
-	float sinxr=sin(rpx/d2r); float sinyr=sin(rpy/d2r); float sinzr=sin(rpz/d2r);
+	float cosxr=cos(rpx/D2R); float cosyr=cos(rpy/D2R); float coszr=cos(rpz/D2R);
+	float sinxr=sin(rpx/D2R); float sinyr=sin(rpy/D2R); float sinzr=sin(rpz/D2R);
 
 	float nx;
 	point2d pp;

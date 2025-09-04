@@ -176,7 +176,6 @@ int main( int argc, char* argv[] )
 
 	SoundInit();
 	PlaySong();
-	//PlayMP3();
 
 	partime=SDL_GetTicks();
 
