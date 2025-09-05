@@ -494,7 +494,7 @@ void P_Water()
 
 	int prt=globalTime-partime;
 
-	if ((globalTime-wft)>1)
+	if ((globalTime-wft)>20)
 	{	wft=SDL_GetTicks();
 		kl++;
 		GC_Water();

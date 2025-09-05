@@ -21,8 +21,8 @@ int cy=gqy>>1;
 float xo[16384],yo[16384],zo[16384];
 int lp0[32768],lp1[32768];
 int pp0[32768],pp1[32768],pp2[32768];
-vector nv[32768];
-vector pnv[16384];
+Vector nv[32768];
+Vector pnv[16384];
 
 int ndts,nlns,npls;
 
@@ -226,7 +226,7 @@ void LoadObject()
 	fclose(obj3d);
 
 
-	vector v1,v2;
+	Vector v1,v2;
 
 	for (i=0; i<npls; i++)
 	{
@@ -237,7 +237,7 @@ void LoadObject()
 
 
 	int nvpoly;
-	vector nvsum;
+	Vector nvsum;
 
 	for (i=0; i<ndts; i++)
 	{
@@ -299,7 +299,7 @@ void LoadObject2()
 	fclose(obj3d);
 
 
-	vector v1,v2;
+	Vector v1,v2;
 
 	for (i=0; i<npls; i++)
 	{
@@ -310,7 +310,7 @@ void LoadObject2()
 
 
 	int nvpoly;
-	vector nvsum;
+	Vector nvsum;
 
 	for (i=0; i<ndts; i++)
 	{
@@ -331,9 +331,9 @@ void LoadObject2()
 }
 
 
-vector CrossProduct(vector v1, vector v2)
+Vector CrossProduct(Vector v1, Vector v2)
 {
-	vector v;
+	Vector v;
 	v.x=v1.y*v2.z-v1.z*v2.y;
 	v.y=v1.z*v2.x-v1.x*v2.z;
 	v.z=v1.x*v2.y-v1.y*v2.x;
@@ -342,13 +342,13 @@ vector CrossProduct(vector v1, vector v2)
 }
 
 
-float DotProduct(vector v1, vector v2)
+float DotProduct(Vector v1, Vector v2)
 {
 	return v1.x*v2.x + v1.y*v2.y + v1.z+v2.z;
 }
 
 
-vector Normalize(vector v)
+Vector Normalize(Vector v)
 {
 	float d=sqrt(v.x*v.x+v.y*v.y+v.z*v.z);
 	v.x=v.x/d;
@@ -357,7 +357,7 @@ vector Normalize(vector v)
 	return v;
 }
 
-vector Meon(vector v)
+Vector Meon(Vector v)
 {
 	v.x=-v.x;
 	v.y=-v.y;

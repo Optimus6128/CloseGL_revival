@@ -6,14 +6,24 @@ void BlobColors();
 #define nblob 1024
 #define NSHAPES 32
 
-typedef struct vector
+typedef struct Vector
 {
     float x;
     float y;
     float z;
-} vector;
+} Vector;
 
-vector CrossProduct(vector v1, vector v2);
-float DotProduct(vector v1, vector v2);
-vector Normalize(vector v);
-vector Meon(vector v);
+typedef struct TexCoords
+{
+	float u,v;
+} TexCoords;
+
+typedef struct Color
+{
+	unsigned char r,g,b,a;
+} Color;
+
+Vector CrossProduct(Vector v1, Vector v2);
+float DotProduct(Vector v1, Vector v2);
+Vector Normalize(Vector v);
+Vector Meon(Vector v);

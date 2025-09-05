@@ -75,8 +75,8 @@ extern GLfloat LightPosition[];
 extern float xo[16384],yo[16384],zo[16384];
 extern int lp0[32768],lp1[32768];
 extern int pp0[32768],pp1[32768],pp2[32768];
-extern vector nv[32768];
-extern vector pnv[16384];
+extern Vector nv[32768];
+extern Vector pnv[16384];
 
 extern int ndts,nlns,npls;
 
@@ -107,22 +107,39 @@ extern unsigned char sphb[spx*spy];
 
 static float glArrayVertices[3 * MAX_ARRAY_SIZE];
 static unsigned char glArrayColors3ub[3 * MAX_ARRAY_SIZE];
-static float glArrayColors3f[3 * MAX_ARRAY_SIZE];
 static float glArrayTexcoords[2 * MAX_ARRAY_SIZE];
 static float glArrayNormals[3 * MAX_ARRAY_SIZE];
 
 static float *glArrayVerticesPtr;
 static unsigned char *glArrayColors3ubPtr;
-static float *glArrayColors3fPtr;
 static float *glArrayTexcoordsPtr;
 static float *glArrayNormalsPtr;
 
 #define M_glVertex3f(x,y,z) *glArrayVerticesPtr++ = (x); *glArrayVerticesPtr++ = (y); *glArrayVerticesPtr++ = (z);
 #define M_glColor3ub(r,g,b) *glArrayColors3ubPtr++ = (r); *glArrayColors3ubPtr++ = (g); *glArrayColors3ubPtr++ = (b);
-#define M_glColor3f(r,g,b) *glArrayColors3fPtr++ = (r); *glArrayColors3fPtr++ = (g); *glArrayColors3fPtr++ = (b);
 #define M_glTexCoord2f(u,v) *glArrayTexcoordsPtr++ = (u); *glArrayTexcoordsPtr++ = (v);
 #define M_glNormal3f(x,y,z) *glArrayNormalsPtr++ = (x); *glArrayNormalsPtr++ = (y); *glArrayNormalsPtr++ = (z);
 
+typedef struct VertexData
+{
+	Vector position;
+	Color color;
+	TexCoords texcoord;
+	Vector normal;
+} VertexData;
+
+static VertexData *glArrayVertexDataPtr;
+static VertexData glArrayVertexData[MAX_ARRAY_SIZE];
+
+static unsigned short *glArrayIndexPtr;
+static unsigned short glArrayIndices[MAX_ARRAY_SIZE];
+
+#define N_glColor3ub(cr,cg,cb) glArrayVertexDataPtr->color.r = (cr); glArrayVertexDataPtr->color.g = (cg); glArrayVertexDataPtr->color.b = (cb);
+#define N_glTexCoord2f(tu,tv) glArrayVertexDataPtr->texcoord.u = (tu); glArrayVertexDataPtr->texcoord.v = (tv);
+#define N_glNormal3f(px,py,pz) glArrayVertexDataPtr->normal.x = (px); glArrayVertexDataPtr->normal.y = (py); glArrayVertexDataPtr->normal.z = (pz);
+#define N_glVertex3f(px,py,pz) glArrayVertexDataPtr->position.x = (px); glArrayVertexDataPtr->position.y = (py); glArrayVertexDataPtr->position.z = (pz); ++glArrayVertexDataPtr;
+#define N_glIndex4us(p0,p1,p2,p3) *glArrayIndexPtr++ = (p0); *glArrayIndexPtr++ = (p1); *glArrayIndexPtr++ = (p2); *glArrayIndexPtr++ = (p3);
+#define N_glIndex2us(p0,p1) *glArrayIndexPtr++ = (p0); *glArrayIndexPtr++ = (p1);
 
 // -------------------------------------------------------------------------------------
 
@@ -130,12 +147,13 @@ static void initGlArrayPointers()
 {
 	glArrayVerticesPtr = glArrayVertices;
 	glArrayColors3ubPtr = glArrayColors3ub;
-	glArrayColors3fPtr = glArrayColors3f;
 	glArrayTexcoordsPtr = glArrayTexcoords;
 	glArrayNormalsPtr = glArrayNormals;
+	glArrayVertexDataPtr = glArrayVertexData;
+	glArrayIndexPtr = glArrayIndices;
 }
 
-static void renderVertexArrays(int count, bool hasColors, bool hasTexcoords, bool hasNormals, bool colorsAreF = false, bool areTriangles = false)
+static void renderVertexArrays(int count, bool hasColors, bool hasTexcoords, bool hasNormals, bool areTriangles = false)
 {
 	// Setup
 
@@ -143,13 +161,8 @@ static void renderVertexArrays(int count, bool hasColors, bool hasTexcoords, boo
 	glVertexPointer(3, GL_FLOAT, 0, glArrayVertices);
 
 	if (hasColors) {
-		if (colorsAreF) {
-			glEnableClientState(GL_COLOR_ARRAY);
-			glColorPointer(3, GL_FLOAT, 0, glArrayColors3f);
-		} else {
-			glEnableClientState(GL_COLOR_ARRAY);
-			glColorPointer(3, GL_UNSIGNED_BYTE, 0, glArrayColors3ub);
-		}
+		glEnableClientState(GL_COLOR_ARRAY);
+		glColorPointer(3, GL_UNSIGNED_BYTE, 0, glArrayColors3ub);
 	}
 
 	if (hasNormals) {
@@ -169,6 +182,69 @@ static void renderVertexArrays(int count, bool hasColors, bool hasTexcoords, boo
 		glDrawArrays(GL_TRIANGLES, 0, count);
 	} else {
 		glDrawArrays(GL_QUADS, 0, count);
+	}
+
+
+	// Clean up
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+
+	if (hasColors) {
+		glDisableClientState(GL_COLOR_ARRAY);
+	}
+	if (hasNormals) {
+		glDisableClientState(GL_NORMAL_ARRAY);
+	}
+	if (hasTexcoords) {
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+}
+
+static void renderVertexArraysPacked(int count, bool hasIndices, bool hasColors, bool hasTexcoords, bool hasNormals, bool areQuadStrips = true, bool areTriangles = false)
+{
+	// Setup
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, sizeof(VertexData), &glArrayVertexData[0].position);
+
+	if (hasColors) {
+		glEnableClientState(GL_COLOR_ARRAY);
+		glColorPointer(3, GL_UNSIGNED_BYTE, sizeof(VertexData), &glArrayVertexData[0].color);
+	}
+
+	if (hasNormals) {
+		glEnableClientState(GL_NORMAL_ARRAY);
+		glNormalPointer(GL_FLOAT, sizeof(VertexData), &glArrayVertexData[0].normal);
+	}
+
+	if (hasTexcoords) {
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(VertexData), &glArrayVertexData[0].texcoord);
+	}
+
+
+	// Draw
+	
+	if (hasIndices) {
+		if (areTriangles) {
+			glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, glArrayIndices);
+		} else {
+			if (areQuadStrips) {
+				glDrawElements(GL_QUAD_STRIP, count, GL_UNSIGNED_SHORT, glArrayIndices);
+			} else {
+				glDrawElements(GL_QUADS, count, GL_UNSIGNED_SHORT, glArrayIndices);
+			}
+		}
+	} else {
+		if (areTriangles) {
+			glDrawArrays(GL_TRIANGLES, 0, count);
+		} else {
+			if (areQuadStrips) {
+				glDrawArrays(GL_QUAD_STRIP, 0, count);
+			} else {
+				glDrawArrays(GL_QUADS, 0, count);
+			}
+		}
 	}
 
 
@@ -460,21 +536,21 @@ void VS_Floor(float y, float xsize, float zsize, float sdiv)
  	initGlArrayPointers();
 
 	for (z=z0; z<z1; z+=dz) {
-		const float cz = 1-z/zsize;
+		const unsigned char cz = (unsigned char)((1-z/zsize) * 255);
 		for (x=x0; x<x1; x+=dx) {
-			M_glColor3f(cz, cz, cz);
+			M_glColor3ub(cz, cz, cz);
 			M_glTexCoord2f(x/(xsize*f),z/(zsize*f)+speed);
 			M_glVertex3f(x,y,-z);
 
-			M_glColor3f(cz, cz, cz);
+			M_glColor3ub(cz, cz, cz);
 			M_glTexCoord2f((x+dx)/(xsize*f),z/(zsize*f)+speed);
 			M_glVertex3f(x+dx,y,-z);
 
-			M_glColor3f(cz, cz, cz);
+			M_glColor3ub(cz, cz, cz);
 			M_glTexCoord2f((x+dx)/(xsize*f),(z+dz)/(zsize*f)+speed);
 			M_glVertex3f(x+dx,y,-z-dz);
 
-			M_glColor3f(cz, cz, cz);
+			M_glColor3ub(cz, cz, cz);
 			M_glTexCoord2f(x/(xsize*f),(z+dz)/(zsize*f)+speed);
 			M_glVertex3f(x,y,-z-dz);
 
@@ -482,7 +558,7 @@ void VS_Floor(float y, float xsize, float zsize, float sdiv)
 		}
 	}
 
-	renderVertexArrays(4 * count, true, true, false, true);
+	renderVertexArrays(4 * count, true, true, false);
 }
 
 
@@ -712,7 +788,7 @@ void VS_ObjectShow(int way)
 				M_glVertex3f(xo[pp2[i]],yo[pp2[i]],zo[pp2[i]]);
 			}
 
-			renderVertexArrays(3 * npls, false, false, true, false, true);
+			renderVertexArrays(3 * npls, false, false, true, true);
 		break;
 
 		default:
@@ -844,8 +920,6 @@ void VS_Blob(float x, float y, float z, unsigned char r, unsigned char g, unsign
 // We must do everything with element indices then it would be quite faster
 void VS_Water(int texn, float px, float py)
 {
-	int count = 0;
-
 	float tpx, tpy;
 	float dpx=2.0f/wqx, dpy=2.0f/wqy;
 
@@ -853,45 +927,57 @@ void VS_Water(int texn, float px, float py)
 
 
 	initGlArrayPointers();
+	int ii = 0;
 
 	int i=wqx+1;
 	tpy=0.0f+py;
 
 	float yq = (float)(1-(wqy>>1));
-	for (int y=1; y<wqy-1; y++)
+	for (int y=1; y<wqy; y++)
 	{
 		tpx=0.0f+px;
 		float xq = (float)(1-(wqx>>1));
-		for (int x=1; x<wqx-1; x++)
+		for (int x=1; x<wqx; x++)
 		{
-			M_glTexCoord2f(tpx,tpy);
-			M_glNormal3f(nbufferx[i],nbuffery[i],nbufferz[i]);
-			M_glVertex3f(xq,yq,hbuffer[i]);
+			N_glTexCoord2f(tpx,tpy);
+			N_glNormal3f(nbufferx[i],nbuffery[i],nbufferz[i]);
+			N_glVertex3f(xq,yq,hbuffer[i]);
 
-			M_glTexCoord2f(tpx+dpx,tpy);
-			M_glNormal3f(nbufferx[i+1],nbuffery[i+1],nbufferz[i+1]);
-			M_glVertex3f(xq+1,yq,hbuffer[i+1]);
+			/*N_glTexCoord2f(tpx+dpx,tpy);
+			N_glNormal3f(nbufferx[i+1],nbuffery[i+1],nbufferz[i+1]);
+			N_glVertex3f(xq+1,yq,hbuffer[i+1]);
 
-			M_glTexCoord2f(tpx+dpx,tpy+dpy);
-			M_glNormal3f(nbufferx[i+1+wqx],nbuffery[i+1+wqx],nbufferz[i+1+wqx]);
-			M_glVertex3f(xq+1,yq+1,hbuffer[i+1+wqx]);
+			N_glTexCoord2f(tpx+dpx,tpy+dpy);
+			N_glNormal3f(nbufferx[i+1+wqx],nbuffery[i+1+wqx],nbufferz[i+1+wqx]);
+			N_glVertex3f(xq+1,yq+1,hbuffer[i+1+wqx]);
 
-			M_glTexCoord2f(tpx,tpy+dpy);
-			M_glNormal3f(nbufferx[i+wqx],nbuffery[i+wqx],nbufferz[i+wqx]);
-			M_glVertex3f(xq,yq+1,hbuffer[i+wqx]);
+			N_glTexCoord2f(tpx,tpy+dpy);
+			N_glNormal3f(nbufferx[i+wqx],nbuffery[i+wqx],nbufferz[i+wqx]);
+			N_glVertex3f(xq,yq+1,hbuffer[i+wqx]);*/
 
-			++count;
+			//Quads
+			if ((x<wqx-1) && (y<wqy-1)) {
+				N_glIndex4us(ii,ii+1,ii+1+wqx-1,ii+wqx-1);
+			}
+
+			//QuadStrips
+			//N_glIndex2us(ii,ii+wqx-1);
+			++ii;
 
 			tpx+=dpx;
 			i++;
-			xq += 1;
+			xq++;
 		}
-		yq += 1;
-		i+=2;
+		yq++;
+		i+=1;
 		tpy+=dpy;
 	}
 
-	renderVertexArrays(4 * count, false, true, true);
+	//QuadStrips
+	//renderVertexArraysPacked(2 * (wqx-1) * (wqy-2), true, false, true, true, true);
+
+	//Quads
+	renderVertexArraysPacked(4 * (wqx-2) * (wqy-2), true, false, true, true, false);
 }
 
 // Why this one faster from above? Or above at least not improved?
@@ -1405,12 +1491,12 @@ void VS_CubeTest(point2d p0, point2d p1, point2d p2, point2d p3, float rcx, floa
 	pp2 = VS_RotatePoint(p2, rcx, -rcy, rcz);
 	pp3 = VS_RotatePoint(p3, rcx, -rcy, rcz);
 
-	vector view;
+	Vector view;
 	view.x = 0.0f;
 	view.y = 0.0f;
 	view.z = -1.0f;
 
-	vector side1, side2, sidenormal;
+	Vector side1, side2, sidenormal;
 
 	side1.x = pp1.x - pp0.x;
 	side1.y = pp1.y - pp0.y;
