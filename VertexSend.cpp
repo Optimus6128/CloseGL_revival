@@ -105,20 +105,20 @@ extern unsigned char sphb[spx*spy];
 // Tables to pass for Vertex Arrays
 #define MAX_ARRAY_SIZE 65536
 
-static float glArrayVertices[3 * MAX_ARRAY_SIZE];
-static unsigned char glArrayColors3ub[3 * MAX_ARRAY_SIZE];
-static float glArrayTexcoords[2 * MAX_ARRAY_SIZE];
-static float glArrayNormals[3 * MAX_ARRAY_SIZE];
+static Vector glArrayVertices[MAX_ARRAY_SIZE];
+static Color glArrayColors3ub[MAX_ARRAY_SIZE];
+static TexCoords glArrayTexcoords[MAX_ARRAY_SIZE];
+static Vector glArrayNormals[MAX_ARRAY_SIZE];
 
-static float *glArrayVerticesPtr;
-static unsigned char *glArrayColors3ubPtr;
-static float *glArrayTexcoordsPtr;
-static float *glArrayNormalsPtr;
+static Vector *glArrayVerticesPtr;
+static Color *glArrayColors3ubPtr;
+static TexCoords *glArrayTexcoordsPtr;
+static Vector *glArrayNormalsPtr;
 
-#define M_glVertex3f(x,y,z) *glArrayVerticesPtr++ = (x); *glArrayVerticesPtr++ = (y); *glArrayVerticesPtr++ = (z);
-#define M_glColor3ub(r,g,b) *glArrayColors3ubPtr++ = (r); *glArrayColors3ubPtr++ = (g); *glArrayColors3ubPtr++ = (b);
-#define M_glTexCoord2f(u,v) *glArrayTexcoordsPtr++ = (u); *glArrayTexcoordsPtr++ = (v);
-#define M_glNormal3f(x,y,z) *glArrayNormalsPtr++ = (x); *glArrayNormalsPtr++ = (y); *glArrayNormalsPtr++ = (z);
+#define M_glVertex3f(px,py,pz) glArrayVerticesPtr->x = (px); glArrayVerticesPtr->y = (py); glArrayVerticesPtr->z = (pz); ++glArrayVerticesPtr;
+#define M_glColor3ub(cr,cg,cb) glArrayColors3ubPtr->r = (cr); glArrayColors3ubPtr->g = (cg); glArrayColors3ubPtr->b = (cb); ++glArrayColors3ubPtr;
+#define M_glTexCoord2f(tu,tv) glArrayTexcoordsPtr->u = (tu); glArrayTexcoordsPtr->v = (tv); ++glArrayTexcoordsPtr;
+#define M_glNormal3f(px,py,pz) glArrayNormalsPtr->x = (px); glArrayNormalsPtr->y = (py); glArrayNormalsPtr->z = (pz); ++glArrayNormalsPtr;
 
 typedef struct VertexData
 {
@@ -153,26 +153,26 @@ static void initGlArrayPointers()
 	glArrayIndexPtr = glArrayIndices;
 }
 
-static void renderVertexArrays(int count, bool hasColors, bool hasTexcoords, bool hasNormals, bool areTriangles = false)
+static void renderVertexArrays(int count, bool hasColors, bool hasTexcoords, bool hasNormals, bool areTriangles = false, int offset = 0)
 {
 	// Setup
 
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 0, glArrayVertices);
+	glVertexPointer(3, GL_FLOAT, 0, &glArrayVertices[offset]);
 
 	if (hasColors) {
 		glEnableClientState(GL_COLOR_ARRAY);
-		glColorPointer(3, GL_UNSIGNED_BYTE, 0, glArrayColors3ub);
+		glColorPointer(3, GL_UNSIGNED_BYTE, sizeof(Color), &glArrayColors3ub[offset]);
 	}
 
 	if (hasNormals) {
 		glEnableClientState(GL_NORMAL_ARRAY);
-		glNormalPointer(GL_FLOAT, 0, glArrayNormals);
+		glNormalPointer(GL_FLOAT, 0, &glArrayNormals[offset]);
 	}
 
 	if (hasTexcoords) {
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(2, GL_FLOAT, 0, glArrayTexcoords);
+		glTexCoordPointer(2, GL_FLOAT, 0, &glArrayTexcoords[offset]);
 	}
 
 
@@ -200,26 +200,26 @@ static void renderVertexArrays(int count, bool hasColors, bool hasTexcoords, boo
 	}
 }
 
-static void renderVertexArraysPacked(int count, bool hasIndices, bool hasColors, bool hasTexcoords, bool hasNormals, bool areQuadStrips = true, bool areTriangles = false)
+static void renderVertexArraysPacked(int count, bool hasIndices, bool hasColors, bool hasTexcoords, bool hasNormals, bool areQuadStrips = true, bool areTriangles = false, int offset = 0)
 {
 	// Setup
 
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, sizeof(VertexData), &glArrayVertexData[0].position);
+	glVertexPointer(3, GL_FLOAT, sizeof(VertexData), &glArrayVertexData[offset].position);
 
 	if (hasColors) {
 		glEnableClientState(GL_COLOR_ARRAY);
-		glColorPointer(3, GL_UNSIGNED_BYTE, sizeof(VertexData), &glArrayVertexData[0].color);
+		glColorPointer(3, GL_UNSIGNED_BYTE, sizeof(VertexData), &glArrayVertexData[offset].color);
 	}
 
 	if (hasNormals) {
 		glEnableClientState(GL_NORMAL_ARRAY);
-		glNormalPointer(GL_FLOAT, sizeof(VertexData), &glArrayVertexData[0].normal);
+		glNormalPointer(GL_FLOAT, sizeof(VertexData), &glArrayVertexData[offset].normal);
 	}
 
 	if (hasTexcoords) {
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(VertexData), &glArrayVertexData[0].texcoord);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(VertexData), &glArrayVertexData[offset].texcoord);
 	}
 
 
@@ -852,10 +852,10 @@ void VS_Prepare_Blob_TC(int count)
 	glArrayTexcoordsPtr = glArrayTexcoords;
 
 	for (int th = 0; th < count; ++th) {
-		*glArrayTexcoordsPtr++ = 0; *glArrayTexcoordsPtr++ = 0;
-		*glArrayTexcoordsPtr++ = 1; *glArrayTexcoordsPtr++ = 0;
-		*glArrayTexcoordsPtr++ = 1; *glArrayTexcoordsPtr++ = 1;
-		*glArrayTexcoordsPtr++ = 0; *glArrayTexcoordsPtr++ = 1;
+		M_glTexCoord2f(0,0);
+		M_glTexCoord2f(1,0);
+		M_glTexCoord2f(1,1);
+		M_glTexCoord2f(0,1);
 	}
 }
 
@@ -920,11 +920,11 @@ void VS_Blob(float x, float y, float z, unsigned char r, unsigned char g, unsign
 // We must do everything with element indices then it would be quite faster
 void VS_Water(int texn, float px, float py)
 {
+	int x,y;
 	float tpx, tpy;
 	float dpx=2.0f/wqx, dpy=2.0f/wqy;
 
 	glBindTexture(GL_TEXTURE_2D, texture[texn]);
-
 
 	initGlArrayPointers();
 	int ii = 0;
@@ -933,11 +933,11 @@ void VS_Water(int texn, float px, float py)
 	tpy=0.0f+py;
 
 	float yq = (float)(1-(wqy>>1));
-	for (int y=1; y<wqy; y++)
+	for (y=1; y<wqy; y++)
 	{
 		tpx=0.0f+px;
 		float xq = (float)(1-(wqx>>1));
-		for (int x=1; x<wqx; x++)
+		for (x=1; x<wqx; x++)
 		{
 			N_glTexCoord2f(tpx,tpy);
 			N_glNormal3f(nbufferx[i],nbuffery[i],nbufferz[i]);
@@ -955,29 +955,25 @@ void VS_Water(int texn, float px, float py)
 			N_glNormal3f(nbufferx[i+wqx],nbuffery[i+wqx],nbufferz[i+wqx]);
 			N_glVertex3f(xq,yq+1,hbuffer[i+wqx]);*/
 
-			//Quads
-			if ((x<wqx-1) && (y<wqy-1)) {
-				N_glIndex4us(ii,ii+1,ii+1+wqx-1,ii+wqx-1);
-			}
-
 			//QuadStrips
-			//N_glIndex2us(ii,ii+wqx-1);
+			N_glIndex2us(ii,ii+wqx-1);
 			++ii;
 
 			tpx+=dpx;
 			i++;
 			xq++;
 		}
+
 		yq++;
 		i+=1;
 		tpy+=dpy;
 	}
 
-	//QuadStrips
-	//renderVertexArraysPacked(2 * (wqx-1) * (wqy-2), true, false, true, true, true);
-
-	//Quads
-	renderVertexArraysPacked(4 * (wqx-2) * (wqy-2), true, false, true, true, false);
+	for (y=1; y<wqy-1; y++)
+	{
+		const int indicesPerRow = 2 * (wqx-1);
+		renderVertexArraysPacked(indicesPerRow, true, false, true, true, true, false, (y-1) * (indicesPerRow /2));
+	}
 }
 
 // Why this one faster from above? Or above at least not improved?

@@ -6,7 +6,7 @@
 #include <fmod.h>
 #include <fmod_errors.h>
 
-//#define MUSIC_ON
+#define MUSIC_ON
 
 FMUSIC_MODULE *mod = NULL;
 FSOUND_SAMPLE *song = 0;
