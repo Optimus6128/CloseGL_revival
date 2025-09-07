@@ -185,7 +185,7 @@ void GC_Distort()
 {
 	int x,y;
 	int i=0;
-	for (y=0; y<nqy; y++)
+	for (y=0; y<nqy; y++) {
 		for (x=0; x<nqx; x++)
 		{
 			int c=rgb[(int)((fsin1[x]+fsin2[y+k]+fsin3[x+y+3*k])*1.5)&255];
@@ -193,15 +193,20 @@ void GC_Distort()
 			gridg[i]=(c & 0x0000FF00)>>8;
 			gridb[i++]=c;
 		}
+	}
 
 	i=0;
-	for (y=0; y<nqy; y++)
+	for (y=0; y<nqy; y++) {
+		const float sinyk = sinf((y+k)/15.0f)*((float)nqx/8.0f);
+		const float nqy8 = (float)nqy/8.0f;
+		const float sinykk = sinf((y+k+k)/23.0f)*12.0f+60.0f;
 		for (x=0; x<nqx; x++)
 		{
-			gridx[i]=(float)((x-(nqx>>1)) + sin((y+k)/15.0f)*nqx/8.0f);
-			gridy[i]=(float)((y-(nqy>>1)) + sin((x+k)/11.0f)*nqy/8.0f);
-			gridz[i++]=(float)(sin((x+k)/42.0f)*8.0f+sin((y+k+k)/23.0f)*12.0f+60.0f);
+			gridx[i]=(float)(x-(nqx>>1)) + sinyk;
+			gridy[i]=(float)(y-(nqy>>1)) + sinf((x+k)/11.0f)*nqy8;
+			gridz[i++]=(float)(sinf((x+k)/42.0f)*8.0f+sinykk);
 		}
+	}
 }
 
 
@@ -212,23 +217,24 @@ void GC_FlatGrid(point2d p0, point2d p1, point2d p2, point2d p3, int face)
 {
 
 	float npts=gqx;
+	float npts2 = npts-1;
 
 	float x0,y0,z0;
 	float dx,dy,dz,dx0,dy0,dz0;
 	float ddx,ddy,ddz;
 	float yp0,dyp0,zp0,dzp0;
 
-	dx=(p1.x-p0.x)/(npts-2);
-	dy0=(p3.y-p0.y)/(npts-2);
-	dz0=(p3.z-p0.z)/(npts-2);
+	dx=(p1.x-p0.x)/npts2;
+	dy0=(p3.y-p0.y)/npts2;
+	dz0=(p3.z-p0.z)/npts2;
 
-	dx0=(p3.x-p0.x)/(npts-2);
-	dyp0=dy=(p1.y-p0.y)/(npts-2);
-	dzp0=dz=(p1.z-p0.z)/(npts-2);
+	dx0=(p3.x-p0.x)/npts2;
+	dyp0=dy=(p1.y-p0.y)/npts2;
+	dzp0=dz=(p1.z-p0.z)/npts2;
 
-	ddx=((p2.x-p3.x) - (p1.x-p0.x))/((npts-2)*(npts-2));
-	ddy=((p2.y-p3.y) - (p1.y-p0.y))/((npts-2)*(npts-2));
-	ddz=((p2.z-p3.z) - (p1.z-p0.z))/((npts-2)*(npts-2));
+	ddx=((p2.x-p3.x) - (p1.x-p0.x))/(npts2*npts2);
+	ddy=((p2.y-p3.y) - (p1.y-p0.y))/(npts2*npts2);
+	ddz=((p2.z-p3.z) - (p1.z-p0.z))/(npts2*npts2);
 
 	x0=p0.x;
 	yp0=p0.y;
@@ -402,7 +408,7 @@ void GC_Water()
 		
 		for (int y=-8; y<8; y++)
 			for (int x=-8; x<8; x++)
-//				*(b1+splashx+x+(splashy+y)*wqx)=sqrt(x*x*x*x+y*y*y*y)*16;
+				*(b1+splashx+x+(splashy+y)*wqx)=(int)(sqrtf((float)(x*x*x*x+y*y*y*y))*16.0f);
 		splashover=true;
 	}
 
@@ -449,32 +455,61 @@ void GC_Water()
 }
 
 
+static float sinPhiTab[180/spy];
+static float cosPhiTab[180/spy];
+
+static void initGC_Spherical()
+{
+	int i=0;
+	for (float phi=0.0f; phi<180.0f; phi+=(180.0f/spy))
+	{
+		sinPhiTab[i] = sinf(phi/d2r);
+		cosPhiTab[i] = cosf(phi/d2r);
+		++i;
+	}
+}
+
 void GC_Spherical()
 {
+	static bool isGC_SphericalInit = false;
+	if (!isGC_SphericalInit) {
+		initGC_Spherical();
+		isGC_SphericalInit = true;
+	}
+
 	int i=0;
 	float d2r4=d2r*4.0f;
 	const float gt = (float)globalTime;
+	const float t0 = sinf(gt/276.0f)*0.3f+1.0f;
+	const float t1 = sinf(gt/376.0f)*0.2f+1.0f;
+	const float t2 = sinf(gt/176.0f)*0.1f+1.0f;
+	const unsigned int gtt = globalTime / 32;
 
 	for (float theta=0.0f; theta<360.0f; theta+=(360.0f/spx))
 	{
 		const float ro0 = sinf((gt+theta*32.0f)/d2r4)*4.0f + 40.0f;
 		const float cth = cosf(theta/d2r);
 		const float sth = sinf(theta/d2r);
+		const float cth0 = cth * t0;
+		const float sth1 = sth * t1;
+		int n = 0;
 		for (float phi=0.0f; phi<180.0f; phi+=(180.0f/spy))
 		{
 			const float ii = (float)i;
 			const float ro = ro0 + sinf((gt+phi*32.0f)/d2r4)*8.0f;
 
-			const float px = ro * sinf(phi/d2r) * cth * (sinf(gt/276.0f)*0.3f+1.0f);
-			const float py = ro * sinf(phi/d2r) * sth * (sinf(gt/376.0f)*0.2f+1.0f);
-			const float pz = ro * cosf(phi/d2r) * (sinf(gt/176.0f)*0.1f+1.0f);
+			const float ros = ro * sinPhiTab[n];
+			const float px = ros * cth0;
+			const float py = ros * sth1;
+			const float pz = ro * cosPhiTab[n] * t2;
+			++n;
 
 			sphx[i]= px;
 			sphy[i]= py;
 			sphz[i]= pz;
 
-			sphr[i]=(unsigned char)(px+128+sinf((3*px+sphy[(int)(ii+gt/64.0f)])/12.0f)*64.0f);
-			sphg[i]=(unsigned char)(py+128+sinf((sphx[(int)(ii+gt/32.0f)]+2*py)/8.0f)*64.0f);
+			sphr[i]=(unsigned char)(px+128+sinf((3*px+sphy[i+(gtt>>1)])/12.0f)*64.0f);
+			sphg[i]=(unsigned char)(py+128+sinf((sphx[i+gtt]+2*py)/8.0f)*64.0f);
 			sphb[i]=(unsigned char)(px+sinf((px+3*py)/16.0f)*32+sinf((4*px+2*py)/8.0f)*32.0f+128.0f);
 
 			++i;

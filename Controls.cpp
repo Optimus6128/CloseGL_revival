@@ -13,6 +13,7 @@ extern int parts;
 extern float rx,ry,rz,tz;
 extern int mmo;
 
+bool showFps = false;
 bool blend;
 bool wire;
 bool controls;
@@ -49,8 +50,8 @@ SDL_keysym* keysym;
 				break;
 
 			case SDLK_SPACE:
-				npart=(npart+1) % parts;
-				partime=SDL_GetTicks();
+				//npart=(npart+1) % parts;
+				//partime=SDL_GetTicks();
 			break;
 
 
@@ -59,7 +60,7 @@ SDL_keysym* keysym;
 				break;
 
 			case SDLK_f:
-				//way=(way+1) % nways;
+				showFps = !showFps;
 			break;
 
 			case SDLK_t:

@@ -17,6 +17,7 @@ const int ntex=11;
 int antexs=ntex;
 
 extern GLuint		texture[ntex];
+extern bool showFps;
 
 int npart=5, parts=6;
 
@@ -251,20 +252,6 @@ void RunPart()
 			TextScript();
 		break;
 
-
-		case 6:
-
-			if (controls==false)
-			{
-				rx=0; ry=0; rz=0;
-				tz=-120;
-			}
-
-			P_Dots();
-
-		break;
-
-
 		default:
 			break;
 	}
@@ -285,7 +272,11 @@ void FpsCount()
 		fps=kk;
 
 		itoa(mo, fpsStr, 10);
-		SDL_WM_SetCaption(fpsStr, fpsStr);
+		if (showFps) {
+			SDL_WM_SetCaption(fpsStr, fpsStr);
+		} else {
+			SDL_WM_SetCaption("CloseGL", "CloseGL");
+		}
 	}
 	if (mmo<20) mmo=20;
 	if (mmo>400) mmo=400;

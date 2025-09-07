@@ -73,6 +73,7 @@ void P_Distort()
 
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_CULL_FACE);
+
 	glDisable(GL_LIGHTING);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -115,6 +116,7 @@ void P_Plasma()
 	GC_Plasma();
 
 	glDisable(GL_CULL_FACE);
+
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 
@@ -310,7 +312,9 @@ void P_Polar()
 
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_CULL_FACE);
+
+	glDisable(GL_CULL_FACE);
+
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -411,43 +415,6 @@ void P_Polar()
 	}
 }
 
-
-void P_Dots()
-{
-
-	float ro, phi, theta;
-
-	ro=128.0f;
-	phi=globalTime/1024.0f;
-	theta=globalTime/1024.0f;
-
-	LightPosition[0] = ro * sin(phi) * cos(theta);
-	LightPosition[1] = ro * sin(phi) * sin(theta);
-	LightPosition[2] = ro * cos(phi);
-
-	glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbient);	
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuse);
-	glLightfv(GL_LIGHT1, GL_POSITION,LightPosition);
-
-	glEnable(GL_LIGHT1);
-	glEnable(GL_LIGHTING);
-
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_TEXTURE_2D);
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
-	glTranslatef(0.0f,0.0f,tz);
-
-	glRotatef(rx,1.0f,0.0f,0.0f);
-	glRotatef(ry,0.0f,1.0f,0.0f);
-	glRotatef(rz,0.0f,0.0f,1.0f);
-
-	VS_ObjectShow(2);
-
-}
-
 void P_Stars()
 {
 	glClearColor(0.0f, 0.0f, 0.25f, 0.0f);
@@ -455,9 +422,8 @@ void P_Stars()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 	glDisable(GL_DEPTH_TEST);
-
-	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
+	glDisable(GL_CULL_FACE);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode( GL_MODELVIEW );
@@ -526,7 +492,6 @@ void P_Water()
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuse);
 	glLightfv(GL_LIGHT1, GL_POSITION,LightPosition);
 
-	glDisable(GL_CULL_FACE);
 	glEnable(GL_LIGHTING);
 
 	glDisable(GL_BLEND);
@@ -565,6 +530,8 @@ void P_Water()
 	glRotatef(duckz,0.0f,0.0f,1.0f);		//direction
 
 	glColor3f(1.0f, 1.0f, 0.0f);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 	VS_ObjectShow(2);
 
 	glLoadIdentity();
@@ -584,6 +551,7 @@ void P_Water()
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
 	VS_Water(2,globalTime/8192.0f,globalTime/16384.0f);
 
 
@@ -701,7 +669,10 @@ void P_Spherical()
 
 	glDisable(GL_BLEND);
 	glDisable(GL_LIGHTING);
-	glDisable(GL_CULL_FACE);
+
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+
 	glEnable(GL_TEXTURE_2D);
 
 	glLoadIdentity();
@@ -726,6 +697,8 @@ void P_Spherical()
 
 		glEnable(GL_BLEND);
 		glBindTexture(GL_TEXTURE_2D, texture[4]);
+		glDisable(GL_CULL_FACE);
+
 		glLoadIdentity();
 		glTranslatef(128.0f,0.0f,0.0f);
 		float yt=((float)prt-15000.0f)/64.0f;
