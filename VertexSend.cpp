@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <gl/gl.h>
 #include <gl/glu.h>
+#include "glext.h"
 #include <gl/glaux.h>
 
 #include <math.h>
@@ -27,6 +28,8 @@ extern float gridy[nqx*nqy];
 extern float gridz[nqx*nqy];
 
 extern char fconv[256];
+
+extern bool pointSpritesSupported;
 
 
 // === Plasma variables ===
@@ -153,10 +156,9 @@ static void initGlArrayPointers()
 	glArrayIndexPtr = glArrayIndices;
 }
 
-static void renderVertexArrays(int count, bool hasColors, bool hasTexcoords, bool hasNormals, bool areTriangles = false, int offset = 0)
+static void renderVertexArrays(int count, GLenum type, bool hasColors, bool hasTexcoords, bool hasNormals, int offset = 0)
 {
 	// Setup
-
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, 0, &glArrayVertices[offset]);
 
@@ -175,18 +177,10 @@ static void renderVertexArrays(int count, bool hasColors, bool hasTexcoords, boo
 		glTexCoordPointer(2, GL_FLOAT, 0, &glArrayTexcoords[offset]);
 	}
 
-
 	// Draw
-	
-	if (areTriangles) {
-		glDrawArrays(GL_TRIANGLES, 0, count);
-	} else {
-		glDrawArrays(GL_QUADS, 0, count);
-	}
-
+	glDrawArrays(type, 0, count);
 
 	// Clean up
-
 	glDisableClientState(GL_VERTEX_ARRAY);
 
 	if (hasColors) {
@@ -200,10 +194,9 @@ static void renderVertexArrays(int count, bool hasColors, bool hasTexcoords, boo
 	}
 }
 
-static void renderVertexArraysPacked(int count, bool hasIndices, bool hasColors, bool hasTexcoords, bool hasNormals, bool areQuadStrips = true, bool areTriangles = false, int offset = 0)
+static void renderVertexArraysPacked(int count, GLenum type, bool hasIndices, bool hasColors, bool hasTexcoords, bool hasNormals, int offset = 0)
 {
 	// Setup
-
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, sizeof(VertexData), &glArrayVertexData[offset].position);
 
@@ -211,45 +204,24 @@ static void renderVertexArraysPacked(int count, bool hasIndices, bool hasColors,
 		glEnableClientState(GL_COLOR_ARRAY);
 		glColorPointer(3, GL_UNSIGNED_BYTE, sizeof(VertexData), &glArrayVertexData[offset].color);
 	}
-
 	if (hasNormals) {
 		glEnableClientState(GL_NORMAL_ARRAY);
 		glNormalPointer(GL_FLOAT, sizeof(VertexData), &glArrayVertexData[offset].normal);
 	}
-
 	if (hasTexcoords) {
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(2, GL_FLOAT, sizeof(VertexData), &glArrayVertexData[offset].texcoord);
 	}
 
-
 	// Draw
-	
 	if (hasIndices) {
-		if (areTriangles) {
-			glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, glArrayIndices);
-		} else {
-			if (areQuadStrips) {
-				glDrawElements(GL_QUAD_STRIP, count, GL_UNSIGNED_SHORT, glArrayIndices);
-			} else {
-				glDrawElements(GL_QUADS, count, GL_UNSIGNED_SHORT, glArrayIndices);
-			}
-		}
+		glDrawElements(type, count, GL_UNSIGNED_SHORT, glArrayIndices);
 	} else {
-		if (areTriangles) {
-			glDrawArrays(GL_TRIANGLES, 0, count);
-		} else {
-			if (areQuadStrips) {
-				glDrawArrays(GL_QUAD_STRIP, 0, count);
-			} else {
-				glDrawArrays(GL_QUADS, 0, count);
-			}
-		}
+		glDrawArrays(type, 0, count);
 	}
 
 
 	// Clean up
-
 	glDisableClientState(GL_VERTEX_ARRAY);
 
 	if (hasColors) {
@@ -428,7 +400,7 @@ void VS_FlatGrid()
 		
 	}
 
-	renderVertexArrays(4 * count, true, false, false);
+	renderVertexArrays(4 * count, GL_QUADS, true, false, false);
 }
 
 
@@ -511,7 +483,7 @@ void VS_FlatGridNew(int face)
 		pgx+=(gqx+2); pgy+=(gqx+2); pgz+=(gqx+2);
 	}
 
-	renderVertexArrays(4 * count, true, false, false);
+	renderVertexArrays(4 * count, GL_QUADS, true, false, false);
 }
 
 
@@ -558,7 +530,7 @@ void VS_Floor(float y, float xsize, float zsize, float sdiv)
 		}
 	}
 
-	renderVertexArrays(4 * count, true, true, false);
+	renderVertexArrays(4 * count, GL_QUADS, true, true, false);
 }
 
 
@@ -602,7 +574,7 @@ void VS_Stars2d(float distance, float size, int i0, int i1)
 		++count;
 	}
 
-	renderVertexArrays(4 * count, true, true, false);
+	renderVertexArrays(4 * count, GL_QUADS, true, true, false);
 }
 
 
@@ -653,7 +625,7 @@ void VS_Distort()
 		tpy+=dpy;
 	}
 
-	renderVertexArrays(4 * count, true, true, false);
+	renderVertexArrays(4 * count, GL_QUADS, true, true, false);
 }
 
 
@@ -788,7 +760,7 @@ void VS_ObjectShow(int way)
 				M_glVertex3f(xo[pp2[i]],yo[pp2[i]],zo[pp2[i]]);
 			}
 
-			renderVertexArrays(3 * npls, false, false, true, true);
+			renderVertexArrays(3 * npls, GL_TRIANGLES, false, false, true);
 		break;
 
 		default:
@@ -844,7 +816,7 @@ void VS_Stars3d()
 		M_glVertex3f(-bsize+x,bsize+y,z);
 	}
 
-	renderVertexArrays(4 * 1024, true, true, false);
+	renderVertexArrays(4 * 1024, GL_QUADS, true, true, false);
 }
 
 void VS_Prepare_Blob_TC(int count)
@@ -879,13 +851,21 @@ void VS_Flower(flower flo)
 		const float fy=ro*sin(theta/D2R) + flo.yfp;
 		const float fz=flo.zfp;
 
-		M_glVertex3f(-bsize+fx,-bsize+fy, fz);
-		M_glVertex3f(bsize+fx,-bsize+fy, fz);
-		M_glVertex3f(bsize+fx,bsize+fy, fz);
-		M_glVertex3f(-bsize+fx,bsize+fy, fz);
+		if (pointSpritesSupported) {
+			M_glVertex3f(fx,fy,fz);
+		} else {
+			M_glVertex3f(-bsize+fx,-bsize+fy, fz);
+			M_glVertex3f(bsize+fx,-bsize+fy, fz);
+			M_glVertex3f(bsize+fx,bsize+fy, fz);
+			M_glVertex3f(-bsize+fx,bsize+fy, fz);
+		}
 	}
 
-	renderVertexArrays(4*VS_FLOWER_POINTS, false, true, false);
+	if (pointSpritesSupported) {
+		renderVertexArrays(VS_FLOWER_POINTS, GL_POINTS, false, false, false);
+	} else {
+		renderVertexArrays(4*VS_FLOWER_POINTS, GL_QUADS, false, true, false);
+	}
 }
 
 void VS_Blob_Begin()
@@ -916,6 +896,7 @@ void VS_Blob(float x, float y, float z, unsigned char r, unsigned char g, unsign
 	glTexCoord2f(0,1);
 	glVertex3f(-bsize+x,bsize+y,z);
 }
+
 
 // We must do everything with element indices then it would be quite faster
 void VS_Water(int texn, float px, float py)
@@ -972,7 +953,7 @@ void VS_Water(int texn, float px, float py)
 	for (y=1; y<wqy-1; y++)
 	{
 		const int indicesPerRow = 2 * (wqx-1);
-		renderVertexArraysPacked(indicesPerRow, true, false, true, true, true, false, (y-1) * (indicesPerRow /2));
+		renderVertexArraysPacked(indicesPerRow, GL_QUAD_STRIP, true, false, true, true, (y-1) * (indicesPerRow /2));
 	}
 }
 
@@ -1255,7 +1236,7 @@ void VS_WannabeCaustics(int texn, float px, float py, float hgt)
 		}
 	}
 
-	renderVertexArrays(4 * count, false, true, false);
+	renderVertexArrays(4 * count, GL_QUADS, false, true, false);
 }
 
 
@@ -1440,7 +1421,7 @@ void VS_Spherical()
 			j+=2;
 		}
 
-		renderVertexArrays(4 * count, true, true, false);
+		renderVertexArrays(4 * count, GL_QUADS, true, true, false);
 }
 
 

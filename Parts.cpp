@@ -7,6 +7,7 @@
 
 #include <gl/gl.h>
 #include <gl/glu.h>
+#include "glext.h"
 #include <gl/glaux.h>
 
 #include "GridCalcs.h"
@@ -19,6 +20,8 @@
 GLfloat LightAmbient[]= { 0.5f, 0.5f, 1.0f, 1.0f };
 GLfloat LightDiffuse[]= { 1.0f, 1.0f, 1.0f, 1.0f };
 GLfloat LightPosition[]= { 0.0f, 0.0f, 2.0f, 1.0f };
+
+extern bool pointSpritesSupported;
 
 extern bool side[6];
 extern GLuint texture[9];
@@ -459,9 +462,6 @@ void P_Stars()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode( GL_MODELVIEW );
 
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, texture[5]);
-
 	glLoadIdentity();
 
 	glTranslatef(0.0f,0.0f,tz);
@@ -477,14 +477,24 @@ void P_Stars()
 		if (star[i].z>=0) star[i].z=-256.0f;
 	}
 
-	VS_Stars3d();
-
 	VS_Prepare_Blob_TC(1024);	// 1024=STARS, overtakes 360=FLOWER POINTS
 
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texture[5]);
+
+	VS_Stars3d();
+
+	if (pointSpritesSupported) {
+		glEnable(GL_POINT_SPRITE_ARB);
+		glPointSize(2);
+	}
 	for (i=0; i<NSHAPES; i++)
 	{
 		shape[i].zfp=-((int)((i*(256/NSHAPES))+globalTime/32.0f) & 255);
 		VS_Flower(shape[i]);
+	}
+	if (pointSpritesSupported) {
+		glDisable(GL_POINT_SPRITE_ARB);
 	}
 }
 

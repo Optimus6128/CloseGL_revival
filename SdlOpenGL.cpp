@@ -2,6 +2,7 @@
 #include <SDL/SDL.h>
 #include <gl/gl.h>
 #include <gl/glu.h>
+#include "glext.h"
 #include <gl/glaux.h>
 
 #include "TextureLoad.h"
@@ -14,18 +15,30 @@ int height;
 float ratio;
 bool windowed;
 
+bool pointSpritesSupported;
+
 extern int partime;
 
 int k;
+
+PFNGLPOINTPARAMETERFEXTPROC			glPointParameterf			=NULL;
+PFNGLPOINTPARAMETERFVARBPROC		glPointParameterfv			=NULL;
 
 // ========= Setup =========
 
 static void setup_opengl()
 {
 
+	glPointParameterf  =	(PFNGLPOINTPARAMETERFEXTPROC)wglGetProcAddress("glPointParameterf");
+	glPointParameterfv =	(PFNGLPOINTPARAMETERFVEXTPROC)wglGetProcAddress("glPointParameterfv");
 
+	// Maybe I could try to use this? But breaks on AMD
+	pointSpritesSupported = (glPointParameterf && glPointParameterfv);
 
-	 LoadGLTextures();
+	pointSpritesSupported = false; // Turn it off! Slower in old GPUs (probably CPU emulated?)
+	// Since I am trying to optimize demo for Pentium 2 with old GeForce4MX, f*** point sprites and not well supported extensions!
+
+	LoadGLTextures();
 
 	glEnable(GL_TEXTURE_2D);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -42,6 +55,13 @@ static void setup_opengl()
     glLoadIdentity();
     gluPerspective(60.0f, ratio, 1.0f, 4096.0f);
 
+	if (pointSpritesSupported) {
+		glPointParameterf(GL_POINT_SIZE_MIN_EXT, 1.0);
+		glPointParameterf(GL_POINT_SIZE_MAX_EXT, 256.0);
+		float quadratic[] = {0.0f, 0.0f, 0.000001f};
+		glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION_ARB, quadratic);
+		glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE );
+	}
 }
 
 
