@@ -43,6 +43,7 @@ static void setup_opengl()
 	glEnable(GL_TEXTURE_2D);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClearDepth(1.0f); glEnable(GL_DEPTH_TEST); glDepthFunc(GL_LEQUAL);
+
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	glColor4f(1.0f,1.0f,1.0f,1.0f);

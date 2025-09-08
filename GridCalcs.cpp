@@ -43,9 +43,7 @@ float plgrida[pqx*pqy];
 
 // === Polar variables ===
 
-unsigned char pgridr[gqx*gqy];
-unsigned char pgridg[gqx*gqy];
-unsigned char pgridb[gqx*gqy];
+Color3 pgridc[gqx*gqy];
 float pgrida[gqx*gqy];
 
 float gx[16][gqx*gqy];
@@ -144,9 +142,9 @@ void GC_Polar(int nfx)
 				break;
 			}
 
-			pgridr[i]=(unsigned char)((c & 0x00FF0000)>>16);
-			pgridg[i]=(unsigned char)((c & 0x0000FF00)>>8);
-			pgridb[i]=(unsigned char)c;
+			pgridc[i].r = (unsigned char)((c & 0x00FF0000)>>16);
+			pgridc[i].g =(unsigned char)((c & 0x0000FF00)>>8);
+			pgridc[i].b =(unsigned char)c;
 
 			++pdist;
 			++pangl;
@@ -261,7 +259,6 @@ void GC_FlatGrid(point2d p0, point2d p1, point2d p2, point2d p3, int face)
 		yp0+=dy0;
 		zp0+=dz0;
 	}
-
 }
 
 

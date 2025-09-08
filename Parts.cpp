@@ -328,6 +328,8 @@ void P_Polar()
 	VS_Floor(-256.0f, 6144.0f, 4096.0f, 32.0f);
 
 	glEnable(GL_BLEND);
+	//glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_COLOR);	// That would have looked better when going to white, but I keep the original visuals as it should, no enhancement here (I better do a new demo for this)
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 	glDisable(GL_DEPTH_TEST);
 	VS_Stars2d(0.0f, 8.0f, 0, 256);
 	VS_Stars2d(0.0f, 16.0f, 256, 512);
@@ -335,7 +337,6 @@ void P_Polar()
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 
-	glDisable(GL_TEXTURE_2D);
 	glLoadIdentity();
 	glTranslatef(0.0f,0.0f,tz);
 

@@ -13,7 +13,8 @@ int tex;
 unsigned int png, png_alpha, jpeg;
 
 
-GLuint		texture[ntex];
+GLuint texture[ntex];
+GLuint texPolar;
 
 // ======= GL Texture Loading =======
 
@@ -43,8 +44,8 @@ void LoadGLTextures()
 	TextureImage[7]=LoadBMP("Data/pisinafloor.bmp");
 	TextureImage[8]=LoadBMP("Data/wall1.bmp");
 
-
 	glGenTextures(9, texture);
+	glGenTextures(1, &texPolar);
 
 	for (int i=0; i<ntex; i++)
 	{
