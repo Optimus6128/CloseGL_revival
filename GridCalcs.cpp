@@ -15,9 +15,9 @@ extern int partime;
 extern unsigned char dist[gqx*gqy];
 extern unsigned char angle[gqx*gqy];
 
-extern int fsin1[32768],fsin2[32768],fsin3[32768];
+extern int fsin1[SIN_SIZE],fsin2[SIN_SIZE],fsin3[SIN_SIZE];
 extern int rgb[256];
-extern int fsin4[32768],fsin5[32768];
+extern int fsin4[SIN_SIZE],fsin5[SIN_SIZE];
 
 extern int globalTime;
 
@@ -31,9 +31,10 @@ float gridz[nqx*nqy];
 
 // === Plasma variables ===
 
-char gridr[nqx*nqy];
+// Commenting out, can use plasma common
+/*char gridr[nqx*nqy];
 char gridg[nqx*nqy];
-char gridb[nqx*nqy];
+char gridb[nqx*nqy];*/
 
 unsigned char plgridr[pqx*pqy];
 unsigned char plgridg[pqx*pqy];
@@ -46,11 +47,9 @@ float plgrida[pqx*pqy];
 Color3 pgridc[gqx*gqy];
 float pgrida[gqx*gqy];
 
-float gx[16][gqx*gqy];
-float gy[16][gqx*gqy];
-float gz[16][gqx*gqy];
-
-extern bool side[6];
+float gx[gqx*gqy];
+float gy[gqx*gqy];
+float gz[gqx*gqy];
 
 extern float rx,ry,rz;
 
@@ -187,9 +186,9 @@ void GC_Distort()
 		for (x=0; x<nqx; x++)
 		{
 			int c=rgb[(int)((fsin1[x]+fsin2[y+k]+fsin3[x+y+3*k])*1.5)&255];
-			gridr[i]=(c & 0x00FF0000)>>16;
-			gridg[i]=(c & 0x0000FF00)>>8;
-			gridb[i++]=c;
+			plgridr[i]=(c & 0x00FF0000)>>16;
+			plgridg[i]=(c & 0x0000FF00)>>8;
+			plgridb[i++]=c;
 		}
 	}
 
@@ -211,7 +210,7 @@ void GC_Distort()
 
 // ===== FlatGrid =====
 
-void GC_FlatGrid(point2d p0, point2d p1, point2d p2, point2d p3, int face)
+void GC_FlatGrid(point2d p0, point2d p1, point2d p2, point2d p3)
 {
 
 	float npts=gqx;
@@ -246,7 +245,7 @@ void GC_FlatGrid(point2d p0, point2d p1, point2d p2, point2d p3, int face)
 		z0=zp0;
 		for (int x=0; x<gqx; x++)
 		{
-			gx[face][i]=x0; gy[face][i]=y0; gz[face][i++]=z0;
+			gx[i]=x0; gy[i]=y0; gz[i++]=z0;
 			x0+=dx;
 			y0+=dy;
 			z0+=dz;
@@ -266,81 +265,84 @@ void GC_FlatGrid(point2d p0, point2d p1, point2d p2, point2d p3, int face)
 
 void GC_Cube(float hx)
 {
-
 	point2d p0,p1,p2,p3;
 
+	p0.x=-hx; p0.y=hx; p0.z=hx;
+	p1.x=hx; p1.y=hx; p1.z=hx;
 
-		p0.x=-hx; p0.y=hx; p0.z=hx;
-		p1.x=hx; p1.y=hx; p1.z=hx;
+	p2.x=hx; p2.y=-hx; p2.z=hx;
+	p3.x=-hx; p3.y=-hx; p3.z=hx;
 
-		p2.x=hx; p2.y=-hx; p2.z=hx;
-		p3.x=-hx; p3.y=-hx; p3.z=hx;
-
-		VS_CubeTest(p0, p1, p2, p3, rx, ry, rz, 0);
-
-		if (side[0])
-			GC_FlatGrid(p0,p1,p2,p3,0);
-
-
-		p0.x=hx; p0.y=hx; p0.z=hx;
-		p1.x=hx; p1.y=hx; p1.z=-hx;
-
-		p2.x=hx; p2.y=-hx; p2.z=-hx;
-		p3.x=hx; p3.y=-hx; p3.z=hx;
-
-		VS_CubeTest(p0, p1, p2, p3, rx, ry, rz, 1);
-
-		if (side[1])
-			GC_FlatGrid(p0,p1,p2,p3,1);
+	if (VS_CubeTest(p0, p1, p2, p3, rx, ry, rz)) {
+		GC_FlatGrid(p0,p1,p2,p3);
+		GC_Polar(0);
+		VS_FlatGridNew();
+	}
 
 
-		p0.x=hx; p0.y=hx; p0.z=-hx;
-		p1.x=-hx; p1.y=hx; p1.z=-hx;
+	p0.x=hx; p0.y=hx; p0.z=hx;
+	p1.x=hx; p1.y=hx; p1.z=-hx;
 
-		p2.x=-hx; p2.y=-hx; p2.z=-hx;
-		p3.x=hx; p3.y=-hx; p3.z=-hx;
+	p2.x=hx; p2.y=-hx; p2.z=-hx;
+	p3.x=hx; p3.y=-hx; p3.z=hx;
 
-		VS_CubeTest(p0, p1, p2, p3, rx, ry, rz, 2);
-
-		if (side[2])
-			GC_FlatGrid(p0,p1,p2,p3,2);
-
-
-		p0.x=-hx; p0.y=hx; p0.z=-hx;
-		p1.x=-hx; p1.y=hx; p1.z=hx;
-
-		p2.x=-hx; p2.y=-hx; p2.z=hx;
-		p3.x=-hx; p3.y=-hx; p3.z=-hx;
-
-		VS_CubeTest(p0, p1, p2, p3, rx, ry, rz, 3);
-
-		if (side[3])
-			GC_FlatGrid(p0,p1,p2,p3,3);
+	if (VS_CubeTest(p0, p1, p2, p3, rx, ry, rz)) {
+		GC_FlatGrid(p0,p1,p2,p3);
+		GC_Polar(1);
+		VS_FlatGridNew();
+	}
 
 
-		p0.x=-hx; p0.y=hx; p0.z=hx;
-		p1.x=-hx; p1.y=hx; p1.z=-hx;
+	p0.x=hx; p0.y=hx; p0.z=-hx;
+	p1.x=-hx; p1.y=hx; p1.z=-hx;
 
-		p2.x=hx; p2.y=hx; p2.z=-hx;
-		p3.x=hx; p3.y=hx; p3.z=hx;
+	p2.x=-hx; p2.y=-hx; p2.z=-hx;
+	p3.x=hx; p3.y=-hx; p3.z=-hx;
 
-		VS_CubeTest(p0, p1, p2, p3, rx, ry, rz, 4);
+	if (VS_CubeTest(p0, p1, p2, p3, rx, ry, rz)) {
+		GC_FlatGrid(p0,p1,p2,p3);
+		GC_Polar(2);
+		VS_FlatGridNew();
+	}
 
-		if (side[4])
-			GC_FlatGrid(p0,p1,p2,p3,4);
+
+	p0.x=-hx; p0.y=hx; p0.z=-hx;
+	p1.x=-hx; p1.y=hx; p1.z=hx;
+
+	p2.x=-hx; p2.y=-hx; p2.z=hx;
+	p3.x=-hx; p3.y=-hx; p3.z=-hx;
+
+	if (VS_CubeTest(p0, p1, p2, p3, rx, ry, rz)) {
+		GC_FlatGrid(p0,p1,p2,p3);
+		GC_Polar(3);
+		VS_FlatGridNew();
+	}
 
 
-		p0.x=-hx; p0.y=-hx; p0.z=-hx;
-		p1.x=-hx; p1.y=-hx; p1.z=hx;
+	p0.x=-hx; p0.y=hx; p0.z=hx;
+	p1.x=-hx; p1.y=hx; p1.z=-hx;
 
-		p2.x=hx; p2.y=-hx; p2.z=hx;
-		p3.x=hx; p3.y=-hx; p3.z=-hx;
+	p2.x=hx; p2.y=hx; p2.z=-hx;
+	p3.x=hx; p3.y=hx; p3.z=hx;
 
-		VS_CubeTest(p0, p1, p2, p3, rx, ry, rz, 5);
+	if (VS_CubeTest(p0, p1, p2, p3, rx, ry, rz)) {
+		GC_FlatGrid(p0,p1,p2,p3);
+		GC_Polar(4);
+		VS_FlatGridNew();
+	}
 
-		if (side[5])
-			GC_FlatGrid(p0,p1,p2,p3,5);
 
+	p0.x=-hx; p0.y=-hx; p0.z=-hx;
+	p1.x=-hx; p1.y=-hx; p1.z=hx;
+
+	p2.x=hx; p2.y=-hx; p2.z=hx;
+	p3.x=hx; p3.y=-hx; p3.z=-hx;
+
+	if (VS_CubeTest(p0, p1, p2, p3, rx, ry, rz)) {
+		GC_FlatGrid(p0,p1,p2,p3);
+		GC_Polar(5);
+		VS_FlatGridNew();
+	}
 }
 
 void GC_Water()

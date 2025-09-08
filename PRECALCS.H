@@ -1,10 +1,11 @@
 void Precalculations();
-void LoadObject();
 void LoadObject2();
 void BlobColors();
 
 #define nblob 1024
 #define NSHAPES 32
+
+#define SIN_SIZE 8192
 
 typedef struct Vector
 {

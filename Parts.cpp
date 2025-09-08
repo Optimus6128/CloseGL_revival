@@ -346,15 +346,6 @@ void P_Polar()
 
 	GC_Cube(32);
 
-	for (int i=0; i<6; i++)
-	{
-		if (side[i])
-		{
-			GC_Polar(i);
-			VS_FlatGridNew(i);
-		}
-	}
-
 	glLoadIdentity();
 	glTranslatef(0.0f,0.0f,0.0f);
 	glRotatef(sin(globalTime/2048.0f)*192.0f, 0.0f,0.0f,1.0f);
@@ -364,7 +355,7 @@ void P_Polar()
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
 	VS_Stars2d(0.0f, amg, 768, 1024);
-	for (i=0; i<1024; i++)
+	for (int i=0; i<1024; i++)
 	{
 		star[i].z+=star[i].speed;
 		if (star[i].z>=0) star[i].z=-256.0f;
@@ -468,13 +459,14 @@ void P_Stars()
 
 void P_Water()
 {
-
+	bool updateCameraRot = false;
 	int prt=globalTime-partime;
 
 	if ((globalTime-wft)>20)
 	{	wft=SDL_GetTicks();
 		kl++;
 		GC_Water();
+		updateCameraRot = true;
 	}
 
 
@@ -593,21 +585,27 @@ void P_Water()
 	if (prt>=8192.0f && prt<16384.0f)
 	{
 		apath2=false;
-		rx=rx0 + 0.00175f*((float)prt-8192.0f);
-		tz=tz0 - 0.0075f*((float)prt-8192.0f);
+		if (updateCameraRot) {
+			rx=rx0 + 0.00175f*((float)prt-8192.0f);
+			tz=tz0 - 0.0075f*((float)prt-8192.0f);
+		}
 	}
 
 	if (prt>=14336.0f && prt<24536.0f)
 	{
-		rz=sin(((float)prt-14336.0f)/1024.0f)*32.0f;
-		rx=rx-sin(((float)prt-14336.0f)/940.0f)*0.3f;
-		tz=tz+sin(((float)prt-14336.0f)/2048.0f)*0.2f;
+		if (updateCameraRot) {
+			rz=sin(((float)prt-14336.0f)/1024.0f)*32.0f;
+			rx=rx-sin(((float)prt-14336.0f)/940.0f)*0.3f;
+			tz=tz+sin(((float)prt-14336.0f)/2048.0f)*0.2f;
+		}
 		if (prt>=16384.0f) tz0=tz;
 	}
 
 	if (prt>=24536.0f && prt<32768.0f)
 	{
-		tz=tz0 + 0.015f*((float)prt-24536.0f);
+		if (updateCameraRot) {
+			tz=tz0 + 0.015f*((float)prt-24536.0f);
+		}
 	}
 
 	if (prt>=32768.0f && prt<36864.0f)

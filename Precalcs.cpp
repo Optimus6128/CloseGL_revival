@@ -18,18 +18,16 @@ int cy=gqy>>1;
 
 // Object Load
 
-float xo[16384],yo[16384],zo[16384];
-int lp0[32768],lp1[32768];
-int pp0[32768],pp1[32768],pp2[32768];
-Vector nv[32768];
-Vector pnv[16384];
+float *xo,*yo,*zo;
+unsigned short *pp0,*pp1,*pp2;
+Vector *pnv;
 
 int ndts,nlns,npls;
 
 
 // plasma
 
-int fsin1[32768],fsin2[32768],fsin3[32768];
+int fsin1[SIN_SIZE],fsin2[SIN_SIZE],fsin3[SIN_SIZE];
 int rgb[256];
 
 // polar
@@ -41,7 +39,7 @@ const float d2r=180.0/pi;
 const float d2b = (rang * d2r) / 360.0;
 
 unsigned char dist[gqx*gqy],angle[gqx*gqy];
-int fsin4[32768],fsin5[32768];
+int fsin4[SIN_SIZE],fsin5[SIN_SIZE];
 
 extern float starx[1024], stary[1024], starz[1024], starspeed[1024];
 extern char starcolr[1024], starcolg[1024], starcolb[1024];
@@ -65,7 +63,7 @@ void Precalculations(void)
 float l=1;
 int i;
 
-for (i=0;i<32768;i++)
+for (i=0;i<SIN_SIZE;i++)
 	{
 		fsin1[i]=sin(i/(l*15.0))*96.0+96.0;
 		fsin2[i]=sin(i/(l*20.0))*112.0+112.0;
@@ -84,7 +82,7 @@ for (i=0;i<64;i++)
 // ===== Polar Precalcs =====
 
 	float al=0.25;
-	for (i=0;i<32768;i++)
+	for (i=0;i<SIN_SIZE;i++)
 	{
 		fsin4[i]=sin(i/(al*d2b))*48.0+64.0;
 		fsin5[i]=sin(i/(al*d2b/2))*40.0+48.0;
@@ -182,82 +180,6 @@ void BlobColors()
 	}
 }
 
-
-
-
-
-
-void LoadObject()
-{
-
-	FILE *obj3d;
-
-	obj3d=fopen("beet.3do","rb");
-
-	char ca,cb;
-
-	ca=fgetc(obj3d); cb=fgetc(obj3d); ndts=ca+(cb<<8);
-	ca=fgetc(obj3d); cb=fgetc(obj3d); nlns=ca+(cb<<8);
-	ca=fgetc(obj3d); cb=fgetc(obj3d); npls=ca+(cb<<8);
-
-	int i;
-	for (i=0; i<ndts; i++)
-	{
-		xo[i]=(float)(fgetc(obj3d)-128);
-		yo[i]=(float)(fgetc(obj3d)-128);
-		zo[i]=(float)(fgetc(obj3d)-128);
-	}
-
-
-	for (i=0; i<nlns; i++)
-	{
-		ca=fgetc(obj3d); cb=fgetc(obj3d); lp0[i]=ca+(cb<<8);
-		ca=fgetc(obj3d); cb=fgetc(obj3d); lp1[i]=ca+(cb<<8);
-	}
-
-
-	for (i=0; i<npls; i++)
-	{
-		ca=fgetc(obj3d); cb=fgetc(obj3d); pp0[i]=ca+(cb<<8);
-		ca=fgetc(obj3d); cb=fgetc(obj3d); pp1[i]=ca+(cb<<8);
-		ca=fgetc(obj3d); cb=fgetc(obj3d); pp2[i]=ca+(cb<<8);
-	}
-
-	fclose(obj3d);
-
-
-	Vector v1,v2;
-
-	for (i=0; i<npls; i++)
-	{
-		v1.x=xo[pp2[i]]-xo[pp1[i]]; v1.y=yo[pp2[i]]-yo[pp1[i]]; v1.z=zo[pp2[i]]-zo[pp1[i]];
-		v2.x=xo[pp1[i]]-xo[pp0[i]]; v2.y=yo[pp1[i]]-yo[pp0[i]]; v2.z=zo[pp1[i]]-zo[pp0[i]];
-		nv[i]=Normalize(CrossProduct(v1,v2));
-	}
-
-
-	int nvpoly;
-	Vector nvsum;
-
-	for (i=0; i<ndts; i++)
-	{
-		nvpoly=0;
-		nvsum.x=0; nvsum.y=0; nvsum.z=0;
-
-		for (int j=0; j<npls; j++)
-		{
-			if (pp0[j]==i || pp1[j]==i || pp2[j]==i)
-			{
-				nvpoly++;
-				nvsum.x+=nv[j].x; nvsum.y+=nv[j].y; nvsum.z+=nv[j].z;
-			}
-		}
-		pnv[i].x=nvsum.x/nvpoly; pnv[i].y=nvsum.y/nvpoly; pnv[i].z=nvsum.z/nvpoly;
-	}
-
-}
-
-
 void LoadObject2()
 {
 
@@ -271,6 +193,18 @@ void LoadObject2()
 
 	ca=fgetc(obj3d); cb=fgetc(obj3d); ndts=ca+(cb<<8);
 	ca=fgetc(obj3d); cb=fgetc(obj3d); npls=ca+(cb<<8);
+
+	xo = new float[ndts];
+	yo = new float[ndts];
+	zo = new float[ndts];
+
+	pp0 = new unsigned short[npls];
+	pp1 = new unsigned short[npls];
+	pp2 = new unsigned short[npls];
+
+	pnv = new Vector[ndts];
+
+	Vector *nv = new Vector[npls];
 
 	int i;
 	for (i=0; i<ndts; i++)
@@ -287,7 +221,6 @@ void LoadObject2()
 		skata=cd*16777216 + cc*65536 + cb*256 + ca;
 		zo[i]=((float)skata/262144.0f-4096.0f)/128.0f;
 	}
-
 
 	for (i=0; i<npls; i++)
 	{
@@ -328,6 +261,7 @@ void LoadObject2()
 		pnv[i].x=nvsum.x/nvpoly; pnv[i].y=nvsum.y/nvpoly; pnv[i].z=nvsum.z/nvpoly;
 	}
 
+	delete(nv);
 }
 
 

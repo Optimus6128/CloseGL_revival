@@ -34,9 +34,9 @@ extern bool pointSpritesSupported;
 
 // === Plasma variables ===
 
-extern char gridr[nqx*nqy];
+/*extern char gridr[nqx*nqy];
 extern char gridg[nqx*nqy];
-extern char gridb[nqx*nqy];
+extern char gridb[nqx*nqy];*/
 
 extern unsigned char plgridr[pqx*pqy];
 extern unsigned char plgridg[pqx*pqy];
@@ -54,11 +54,9 @@ extern GLuint texPolar;
 
 extern int globalTime;
 
-extern float gx[16][gqx*gqy];
-extern float gy[16][gqx*gqy];
-extern float gz[16][gqx*gqy];
-
-bool side[6];
+extern float gx[gqx*gqy];
+extern float gy[gqx*gqy];
+extern float gz[gqx*gqy];
 
 // === 2d stars ===
 
@@ -74,11 +72,9 @@ extern GLfloat LightAmbient[];
 extern GLfloat LightDiffuse[];
 extern GLfloat LightPosition[];
 
-extern float xo[16384],yo[16384],zo[16384];
-extern int lp0[32768],lp1[32768];
-extern int pp0[32768],pp1[32768],pp2[32768];
-extern Vector nv[32768];
-extern Vector pnv[16384];
+extern float *xo,*yo,*zo;
+extern unsigned short *pp0,*pp1,*pp2;
+extern Vector *pnv;
 
 extern int ndts,nlns,npls;
 
@@ -372,14 +368,14 @@ static void textureShit()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 }
 
-void VS_FlatGridNew(int face)
+void VS_FlatGridNew()
 {
 	float *pgx, *pgy, *pgz;
 	int count = 0;
 
-	pgx=&gx[face][0];
-	pgy=&gy[face][0];
-	pgz=&gz[face][0];
+	pgx=&gx[0];
+	pgy=&gy[0];
+	pgz=&gz[0];
 
 	int i;
 
@@ -405,40 +401,6 @@ void VS_FlatGridNew(int face)
 		glVertex3f(*(pgx+i),*(pgy+i),*(pgz+i));
 	glEnd();
 }
-
-/*void VS_FlatGridNew1(int face)
-{
-	float *pgx, *pgy, *pgz;
-	int count = 0;
-
-	pgx=&gx[face][0];
-	pgy=&gy[face][0];
-	pgz=&gz[face][0];
-
-	int i=0;
-	for (int y=0; y<gqy-1; y+=1)
-	{
-		int count = 0;
-		initGlArrayPointers();
-
-		for (int x=0; x<gqx; x+=1)
-		{
-			M_glColor3ub(pgridc[i].r, pgridc[i].g, pgridc[i].b);
-			M_glVertex3f(*pgx,*pgy,*pgz);
-
-			M_glColor3ub(pgridc[i+gqx].r, pgridc[i+gqx].g, pgridc[i+gqx].b);
-			M_glVertex3f(*(pgx+gqx),*(pgy+gqx),*(pgz+gqx));
-
-			count += 1;
-
-			i+=1;
-			pgx+=1; pgy+=1; pgz+=1;
-		}
-
-		renderVertexArrays(2 * count, GL_QUAD_STRIP, false, true, false, false);
-	}
-}*/
-
 
 void VS_Floor(float y, float xsize, float zsize, float sdiv)
 {
@@ -554,25 +516,11 @@ void VS_Distort()
 		for (x=0; x<nqx-1; x++)
 		{
 			M_glTexCoord2f(tpx,tpy);
-			//M_glColor3ub(gridr[i],gridg[i],gridb[i]);
-			M_glColor3ub(gridr[i+1],gridg[i+1],gridb[i+1]);
-			//M_glColor3ub(gridr[i+1+nqx],gridg[i+1+nqx],gridb[i+1+nqx]);
-			//M_glColor3ub(gridr[i+nqx],gridg[i+nqx],gridb[i+nqx]);
+			M_glColor3ub(plgridr[i+1],plgridg[i+1],plgridb[i+1]);
 			M_glVertex3f(gridx[i],gridy[i],gridz[i]);
 
-			//M_glTexCoord2f(tpx+dpx,tpy);
-			//M_glColor3ub(gridr[i],gridg[i],gridb[i]);
-			//M_glVertex3f(gridx[i+1],gridy[i+1],gridz[i+1]);
-
-			//M_glTexCoord2f(tpx+dpx,tpy+dpy);
-			//M_glColor3ub(gridr[i+1],gridg[i+1],gridb[i+1]);
-			//M_glVertex3f(gridx[i+1+nqx],gridy[i+1+nqx],gridz[i+1+nqx]);
-
 			M_glTexCoord2f(tpx,tpy+dpy);
-			//M_glColor3ub(gridr[i],gridg[i],gridb[i]);
-			//M_glColor3ub(gridr[i+1],gridg[i+1],gridb[i+1]);
-			//M_glColor3ub(gridr[i+1+nqx],gridg[i+1+nqx],gridb[i+1+nqx]);
-			M_glColor3ub(gridr[i+nqx],gridg[i+nqx],gridb[i+nqx]);
+			M_glColor3ub(plgridr[i+nqx],plgridg[i+nqx],plgridb[i+nqx]);
 			M_glVertex3f(gridx[i+nqx],gridy[i+nqx],gridz[i+nqx]);
 
 			++count;
@@ -841,7 +789,8 @@ void VS_Water(int texn, float px, float py)
 	for (y=1; y<wqy-1; y++)
 	{
 		const int indicesPerRow = 2 * (wqx-1);
-		renderVertexArrays(indicesPerRow, GL_QUAD_STRIP, true, false, true, true, (y-1) * (indicesPerRow /2));
+		//renderVertexArrays(indicesPerRow, GL_QUAD_STRIP, true, false, true, true, (y-1) * (indicesPerRow /2));
+		renderVertexArrays(indicesPerRow, GL_TRIANGLE_STRIP, true, false, true, true, (y-1) * (indicesPerRow /2));
 	}
 }
 
@@ -1124,7 +1073,7 @@ void VS_Tail(float sizex, int sdx, ssine s0, ssine s1, float r, float g, float b
 	glEnd();
 }
 
-void VS_CubeTest(point2d p0, point2d p1, point2d p2, point2d p3, float rcx, float rcy, float rcz, int cubeside)
+bool VS_CubeTest(point2d p0, point2d p1, point2d p2, point2d p3, float rcx, float rcy, float rcz)
 {
 	point2d pp0,pp1,pp2,pp3;
 
@@ -1149,10 +1098,7 @@ void VS_CubeTest(point2d p0, point2d p1, point2d p2, point2d p3, float rcx, floa
 	side2.z = pp3.z - pp0.z;
 
 	sidenormal=CrossProduct(side1, side2);
-	if (DotProduct(sidenormal,view)<0) side[cubeside]=true;
-		else side[cubeside]=false;
-	
-
+	return (DotProduct(sidenormal,view)<0);
 }
 
 

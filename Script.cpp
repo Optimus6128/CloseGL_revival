@@ -13,10 +13,9 @@
 #include "VertexSend.h"
 
 
-const int ntex=11;
-int antexs=ntex;
+const int ntex=9;
 
-extern GLuint		texture[ntex];
+extern GLuint texture[ntex];
 extern bool showFps;
 
 int npart=5, parts=6;

@@ -27,6 +27,30 @@ AUX_RGBImageRec *LoadBMP(char *Filename)
 
 }
 
+static unsigned char *fuckRgb;
+
+// The fucking weirdness of blueish around fonts (wtf? drivers???)
+static void hackFonts(AUX_RGBImageRec *texData)
+{
+	const int size = texData->sizeX * texData->sizeY;
+
+	fuckRgb = new unsigned char[size * 4];
+
+	unsigned char *src = (unsigned char*)texData->data;
+	unsigned char *dst = fuckRgb;
+	for (int i=0; i<size; ++i) {
+		unsigned char r = *src++;
+		unsigned char g = *src++;
+		unsigned char b = *src++;
+		*dst++ = r;
+		*dst++ = g;
+		*dst++ = b;
+		if ((r+g+b)/3 < 64)
+			*dst++ = 0;
+		else
+			*dst++ = 255;
+	}
+}
 
 void LoadGLTextures()
 {
@@ -47,22 +71,26 @@ void LoadGLTextures()
 	glGenTextures(9, texture);
 	glGenTextures(1, &texPolar);
 
+	hackFonts(TextureImage[4]);
+
 	for (int i=0; i<ntex; i++)
 	{
+		glBindTexture(GL_TEXTURE_2D, texture[i]);
 
-	glBindTexture(GL_TEXTURE_2D, texture[i]);
-	glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[i]->sizeX, TextureImage[i]->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[i]->data);
-
-	if (i!=4)
-	{
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	}
-	else
-	{
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-	}
+		if (i!=4)
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[i]->sizeX, TextureImage[i]->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[i]->data);
+			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+		}
+		else
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, 4, TextureImage[i]->sizeX, TextureImage[i]->sizeY, 0, GL_RGBA, GL_UNSIGNED_BYTE, fuckRgb);
+			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
+			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
+		}
 
 
 		if (TextureImage[i])							// If Texture Exists
@@ -74,4 +102,6 @@ void LoadGLTextures()
 			free(TextureImage[i]);						// Free The Image Structure
 		}
 	}
+
+	delete(fuckRgb);
 }
