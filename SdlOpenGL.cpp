@@ -196,6 +196,16 @@ int demoMain(int screenWidth, int screenHeight, bool isWindowed, bool hasVsync)
 			quit_demo(1);
     }
 
+	typedef void (APIENTRY *PFNWGLSWAPINTERVALEXTPROC)(int interval);
+	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)SDL_GL_GetProcAddress("wglSwapIntervalEXT");
+	if (wglSwapIntervalEXT) {
+		if (hasVsync) {
+			wglSwapIntervalEXT(1);	// vsync on
+		} else {
+			wglSwapIntervalEXT(0);
+		}
+	}
+
     setup_opengl();
 	Precalculations();
 	LoadObject2();
