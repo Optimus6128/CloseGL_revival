@@ -27,7 +27,7 @@ bool apath2=true;
 int fps=0,mo=0,kk=0,mmo=0;
 Uint32 atime=0;
 
-extern k;
+extern int k;
 extern bool controls;
 extern bool blend;
 

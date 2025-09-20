@@ -291,7 +291,7 @@ void P_Plasma()
 
 void P_Polar()
 {
-
+	int i;
 	float frix1=20480.0f - 2048.0f+1024.0f-256.0f-128.0f-128.0f;
 	float frix2=24576.0f - 2048.0f+1024.0f-256.0f-128.0f-128.0f;
 
@@ -355,7 +355,7 @@ void P_Polar()
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
 	VS_Stars2d(0.0f, amg, 768, 1024);
-	for (int i=0; i<1024; i++)
+	for (i=0; i<1024; i++)
 	{
 		star[i].z+=star[i].speed;
 		if (star[i].z>=0) star[i].z=-256.0f;
@@ -409,6 +409,7 @@ void P_Polar()
 
 void P_Stars()
 {
+	int i;
 	glClearColor(0.0f, 0.0f, 0.25f, 0.0f);
 
 	glEnable(GL_BLEND);
@@ -429,7 +430,7 @@ void P_Stars()
 	glRotatef(rz,0.0f,0.0f,1.0f);
 
 
-	for (int i=0; i<1024; i++)
+	for (i=0; i<1024; i++)
 	{
 		star[i].z+=star[i].speed*mmo/4.0f;
 		if (star[i].z>=0) star[i].z=-256.0f;

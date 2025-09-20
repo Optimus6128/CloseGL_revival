@@ -70,9 +70,9 @@ bool ripple=false;
 int ripplex, rippley;
 float duckrpx, duckrpy;
 
-extern kl;
+extern int kl;
 
-extern k;
+extern int k;
 extern int rippletime;
 extern bool splash1;
 bool splashover=false;

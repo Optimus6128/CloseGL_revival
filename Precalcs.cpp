@@ -92,8 +92,8 @@ for (i=0;i<64;i++)
 	for (int y=-cy;y<cy;y++)
 	   for (int x=-cx;x<cx;x++)
 	   {
-	       dist[i]=(sqrt(x*x + y*y)*8.0);
-		   angle[i++]=(atan2(y,x)*d2b);
+	       dist[i]=(sqrtf(x*x + y*y)*8.0f);
+		   angle[i++]=(atan2f(y,x)*d2b);
 	   }
 
 
