@@ -291,7 +291,16 @@ void P_Plasma()
 
 void P_Polar()
 {
+	static int prevT = globalTime;
+	static bool updateStars;
 	int i;
+
+	updateStars = false;
+	if ((globalTime-prevT)>20)
+	{	prevT=SDL_GetTicks();
+		updateStars = true;
+	}
+
 	float frix1=20480.0f - 2048.0f+1024.0f-256.0f-128.0f-128.0f;
 	float frix2=24576.0f - 2048.0f+1024.0f-256.0f-128.0f-128.0f;
 
@@ -331,9 +340,9 @@ void P_Polar()
 	//glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_COLOR);	// That would have looked better when going to white, but I keep the original visuals as it should, no enhancement here (I better do a new demo for this)
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 	glDisable(GL_DEPTH_TEST);
-	VS_Stars2d(0.0f, 8.0f, 0, 256);
-	VS_Stars2d(0.0f, 16.0f, 256, 512);
-	VS_Stars2d(0.0f, 32.0f, 512, 768);
+	VS_Stars2d(0.0f, 8.0f, 0, 256, updateStars);
+	VS_Stars2d(0.0f, 16.0f, 256, 512, updateStars);
+	VS_Stars2d(0.0f, 32.0f, 512, 768, updateStars);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 
@@ -354,10 +363,10 @@ void P_Polar()
 
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
-	VS_Stars2d(0.0f, amg, 768, 1024);
+	VS_Stars2d(0.0f, amg, 768, 1024, updateStars);
 	for (i=0; i<1024; i++)
 	{
-		star[i].z+=star[i].speed;
+		star[i].z +=star[i].speed;
 		if (star[i].z>=0) star[i].z=-256.0f;
 	}
 
@@ -409,7 +418,16 @@ void P_Polar()
 
 void P_Stars()
 {
+	static int prevT = globalTime;
+	static bool updateStars;
 	int i;
+
+	updateStars = false;
+	if ((globalTime-prevT)>20)
+	{	prevT=SDL_GetTicks();
+		updateStars = true;
+	}
+
 	glClearColor(0.0f, 0.0f, 0.25f, 0.0f);
 
 	glEnable(GL_BLEND);
@@ -429,10 +447,10 @@ void P_Stars()
 	glRotatef(ry,0.0f,1.0f,0.0f);
 	glRotatef(rz,0.0f,0.0f,1.0f);
 
-
 	for (i=0; i<1024; i++)
 	{
-		star[i].z+=star[i].speed*mmo/4.0f;
+		//star[i].z+=star[i].speed*mmo/4.0f;
+		if (updateStars) star[i].z+=8.0f*star[i].speed;
 		if (star[i].z>=0) star[i].z=-256.0f;
 	}
 
@@ -449,7 +467,7 @@ void P_Stars()
 	}
 	for (i=0; i<NSHAPES; i++)
 	{
-		shape[i].zfp=-((int)((i*(256/NSHAPES))+globalTime/32.0f) & 255);
+		shape[i].zfp = -fmodf(shape[i].zfpBase + globalTime/32.0f, 256.0f);
 		VS_Flower(shape[i]);
 	}
 	if (pointSpritesSupported) {

@@ -146,6 +146,9 @@ for (i=0;i<64;i++)
 		shape[i].xfp=rand()%128 - 64;
 		shape[i].yfp=rand()%128 - 64;
 		shape[i].zfp=-(i*16);
+
+		shape[i].zfpBase = (float)i * (256.0f/NSHAPES);
+		shape[i].zfp = -shape[i].zfpBase;
 	}
 
 // ==== Font Precalcs ====

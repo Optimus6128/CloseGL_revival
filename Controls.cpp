@@ -61,6 +61,7 @@ SDL_keysym* keysym;
 
 			case SDLK_f:
 				showFps = !showFps;
+				if (!showFps) SDL_WM_SetCaption("CloseGL", "CloseGL");
 			break;
 
 			case SDLK_t:

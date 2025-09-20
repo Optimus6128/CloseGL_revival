@@ -270,11 +270,9 @@ void FpsCount()
 		mo=(kk-fps);
 		fps=kk;
 
-		itoa(mo, fpsStr, 10);
+		_itoa(mo, fpsStr, 10);
 		if (showFps) {
 			SDL_WM_SetCaption(fpsStr, fpsStr);
-		} else {
-			SDL_WM_SetCaption("CloseGL", "CloseGL");
 		}
 	}
 	if (mmo<20) mmo=20;

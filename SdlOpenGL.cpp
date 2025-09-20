@@ -9,6 +9,7 @@
 #include "precalcs.h"
 #include "Script.h"
 #include "Sound.h"
+#include "fwzSetup.h"
 
 int width;
 int height;
@@ -67,7 +68,7 @@ static void setup_opengl()
 
 
 
-void ReadCFG()
+/*void ReadCFG()
 {
 	FILE *cfg;
 	char ca;
@@ -145,15 +146,19 @@ void ReadCFG()
 	}
 
 	fclose(cfg);
-}
+}*/
 
 
 // =-=-= Main =-=-=
 
-int main( int argc, char* argv[] )
+int demoMain(int screenWidth, int screenHeight, bool isWindowed, bool hasVsync)
 {
+	//ReadCFG();
 
-	ReadCFG();
+	width = screenWidth;
+	height = screenHeight;
+	windowed = isWindowed;
+
 	ratio = (float)width / (float) height;
 
     const SDL_VideoInfo* info = NULL;
@@ -207,10 +212,29 @@ int main( int argc, char* argv[] )
     return 0;
 }
 
-int APIENTRY WinMain(HINSTANCE hInstance,
+/*int APIENTRY WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow)
 {
 	return main(nCmdShow, (char**)lpCmdLine);
+}*/
+
+INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, INT nCmdShow)
+{
+	fwzSettings setup;
+
+	setup.hInstance = hInstance;
+
+	setup.scrBPP = 32;
+	setup.nVsync = 1;
+
+	setup.nAlwaysOnTop = 0;
+	setup.scrWidth = 800;
+	setup.scrHeight = 600;
+	setup.nWindowed = 0;
+
+	if (!OpenSetupDialog(&setup)) return -1;
+	demoMain(setup.scrWidth, setup.scrHeight, setup.nWindowed, setup.nVsync);
+	return 0;
 }

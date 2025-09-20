@@ -449,7 +449,7 @@ void VS_Floor(float y, float xsize, float zsize, float sdiv)
 }
 
 
-void VS_Stars2d(float distance, float size, int i0, int i1)
+void VS_Stars2d(float distance, float size, int i0, int i1, bool update)
 {
 	int count = 0;
 
@@ -459,7 +459,7 @@ void VS_Stars2d(float distance, float size, int i0, int i1)
 
 	for (int i=i0; i<i1; i++)
 	{
-		starx[i]+=starspeed[i];
+		if (update) starx[i]+=3.0f*starspeed[i];
 		if (starx[i]<-1024.0f) starx[i]=1024.0f;
 		
 		const float x = starx[i];
@@ -670,7 +670,7 @@ void VS_Flower(flower flo)
 	}
 
 	const float thk=globalTime / 128.0f;
-	float const mulc = (256.0f + flo.zfp) / 256.0f;
+	const float mulc = (256.0f + flo.zfp) / 256.0f;
 	const float bsize = 1.35f;
 
 	initGlArrayPointers();
