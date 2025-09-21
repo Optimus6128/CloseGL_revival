@@ -1,15 +1,12 @@
+#ifdef _MSC_VER
 #pragma warning(disable: 4244)
 #pragma warning(disable: 4809)
 #pragma warning(disable: 4305)
+#endif
 
-#include <windows.h>
-#include <gl/gl.h>
-#include <gl/glu.h>
-#include "glext.h"
-#include <gl/glaux.h>
+#include "opengl.h"
 
 #include <math.h>
-#include <SDL/SDL.h>
 
 #include "GridCalcs.h"
 #include "precalcs.h"
@@ -262,7 +259,7 @@ float VS_FontWrite2(char c, float xcp, float ycp, float z)
 	return xcp-fsize;
 }
 
-void VS_TextWrite2(char *text, float xtp, float ytp, float z)
+void VS_TextWrite2(const char *text, float xtp, float ytp, float z)
 {
 	glBegin(GL_QUADS);
 
@@ -292,7 +289,7 @@ float VS_FontWrite(char c, float xcp, float ycp, float z)
 	return xcp-fsize;
 }
 
-void VS_TextWrite(char *text, float xtp, float ytp, float z)
+void VS_TextWrite(const char *text, float xtp, float ytp, float z)
 {
 	glBegin(GL_QUADS);
 

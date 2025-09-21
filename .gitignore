@@ -1,0 +1,6 @@
+*.o
+*.swp
+closegl
+Data/
+*.json
+.cache/

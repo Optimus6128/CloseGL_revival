@@ -1,14 +1,12 @@
+#ifdef _MSC_VER
 #pragma warning(disable: 4244)
 #pragma warning(disable: 4305)
+#endif
 
-#include <windows.h>
 #include <math.h>
 #include <SDL/SDL.h>
 
-#include <gl/gl.h>
-#include <gl/glu.h>
-#include "glext.h"
-#include <gl/glaux.h>
+#include "opengl.h"
 
 #include "GridCalcs.h"
 #include "VertexSend.h"
@@ -176,7 +174,7 @@ void P_Plasma()
 		glEnable(GL_BLEND);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, texture[4]);
-		char *demoname="CloseGL";
+		const char *demoname="CloseGL";
 
 		glBegin(GL_QUADS);
 

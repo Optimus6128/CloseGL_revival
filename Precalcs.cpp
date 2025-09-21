@@ -1,5 +1,7 @@
+#ifdef _MSC_VER
 #pragma warning(disable: 4244)
 #pragma warning(disable: 4305)
+#endif
 
 #include <math.h>
 #include <stdio.h>
@@ -183,19 +185,42 @@ void BlobColors()
 	}
 }
 
+static unsigned short read_uint16(FILE *fp)
+{
+	unsigned short val;
+	fread(&val, 2, 1, fp);
+	if(*(unsigned int*)"ABCD" == 0x41424344) {
+		return (val >> 8) | (val << 8);
+	}
+	return val;
+}
+
+static unsigned int read_uint32(FILE *fp)
+{
+	unsigned int val;
+	fread(&val, 4, 1, fp);
+	if(*(unsigned int*)"ABCD" == 0x41424344) {
+		return (val << 24) | ((val & 0xff00) << 8) | ((val & 0xff0000) >> 8) | (val >> 24);
+	}
+	return val;
+}
+
 void LoadObject2()
 {
 
 	FILE *obj3d;
 	//float *kurasi;
 
-	obj3d=fopen("duck.3do","rb");
+	if(!(obj3d=fopen("duck.3do","rb"))) {
+		fprintf(stderr, "failed to open duck.3do\n");
+		abort();
+	}
 
 	unsigned char ca,cb,cc,cd;
 	unsigned int skata;
 
-	ca=fgetc(obj3d); cb=fgetc(obj3d); ndts=ca+(cb<<8);
-	ca=fgetc(obj3d); cb=fgetc(obj3d); npls=ca+(cb<<8);
+	ndts = read_uint16(obj3d);
+	npls = read_uint16(obj3d);
 
 	xo = new float[ndts];
 	yo = new float[ndts];
@@ -212,24 +237,21 @@ void LoadObject2()
 	int i;
 	for (i=0; i<ndts; i++)
 	{
-		ca=fgetc(obj3d); cb=fgetc(obj3d); cc=fgetc(obj3d); cd=fgetc(obj3d);
-		skata=cd*16777216 + cc*65536 + cb*256 + ca;
+		skata = read_uint32(obj3d);
 		xo[i]=((float)skata/262144.0f-4096.0f)/128.0f;
 
-		ca=fgetc(obj3d); cb=fgetc(obj3d); cc=fgetc(obj3d); cd=fgetc(obj3d);
-		skata=cd*16777216 + cc*65536 + cb*256 + ca;
+		skata = read_uint32(obj3d);
 		yo[i]=((float)skata/262144.0f-4096.0f)/128.0f;
-		
-		ca=fgetc(obj3d); cb=fgetc(obj3d); cc=fgetc(obj3d); cd=fgetc(obj3d);
-		skata=cd*16777216 + cc*65536 + cb*256 + ca;
+
+		skata = read_uint32(obj3d);
 		zo[i]=((float)skata/262144.0f-4096.0f)/128.0f;
 	}
 
 	for (i=0; i<npls; i++)
 	{
-		ca=fgetc(obj3d); cb=fgetc(obj3d); pp0[i]=ca+(cb<<8);
-		ca=fgetc(obj3d); cb=fgetc(obj3d); pp1[i]=ca+(cb<<8);
-		ca=fgetc(obj3d); cb=fgetc(obj3d); pp2[i]=ca+(cb<<8);
+		pp0[i] = read_uint16(obj3d);
+		pp1[i] = read_uint16(obj3d);
+		pp2[i] = read_uint16(obj3d);
 	}
 
 	fclose(obj3d);
@@ -264,7 +286,7 @@ void LoadObject2()
 		pnv[i].x=nvsum.x/nvpoly; pnv[i].y=nvsum.y/nvpoly; pnv[i].z=nvsum.z/nvpoly;
 	}
 
-	delete(nv);
+	delete [] nv;
 }
 
 

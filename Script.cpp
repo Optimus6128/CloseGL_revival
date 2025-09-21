@@ -1,10 +1,11 @@
+#ifdef _MSC_VER
 #pragma warning(disable: 4244)
 #pragma warning(disable: 4305)
+#endif
 
-#include <windows.h>
 #include <math.h>
 #include <SDL/SDL.h>
-#include <gl/gl.h>
+#include "opengl.h"
 
 #include "Parts.h"
 #include "controls.h"
@@ -270,7 +271,7 @@ void FpsCount()
 		mo=(kk-fps);
 		fps=kk;
 
-		_itoa(mo, fpsStr, 10);
+		sprintf(fpsStr, "%d", mo);
 		if (showFps) {
 			SDL_WM_SetCaption(fpsStr, fpsStr);
 		}

@@ -1,9 +1,5 @@
-#include <windows.h>
 #include <SDL/SDL.h>
-
-#include <gl/gl.h>
-#include <gl/glu.h>
-#include <gl/glaux.h> 
+#include "opengl.h"
 
 #include "Script.h"
 

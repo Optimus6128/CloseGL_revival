@@ -1,7 +1,6 @@
 #include <SDL/SDL.h>
 #include <math.h>
 #include <stdlib.h>
-#include <windows.h>
 #include "GridCalcs.h"
 #include "precalcs.h"
 #include "VertexSend.h"

@@ -1,16 +1,18 @@
+#ifdef WIN32
+#define MUSIC_ON
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <windows.h>
-#include <conio.h>
 
+#ifdef MUSIC_ON
 #include <fmod.h>
 #include <fmod_errors.h>
-
-#define MUSIC_ON
 
 FMUSIC_MODULE *mod = NULL;
 FSOUND_SAMPLE *song = 0;
 FSOUND_DSPUNIT    *DrySFXUnit = NULL;
+#endif
 
 void SoundInit()
 {

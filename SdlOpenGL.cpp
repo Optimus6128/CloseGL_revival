@@ -1,15 +1,13 @@
-#include <windows.h>
 #include <SDL/SDL.h>
-#include <gl/gl.h>
-#include <gl/glu.h>
-#include "glext.h"
-#include <gl/glaux.h>
+#include "opengl.h"
 
 #include "TextureLoad.h"
 #include "precalcs.h"
 #include "Script.h"
 #include "Sound.h"
+#ifdef WIN32
 #include "fwzSetup.h"
+#endif
 
 int width;
 int height;
@@ -29,13 +27,13 @@ PFNGLPOINTPARAMETERFVARBPROC		glPointParameterfv			=NULL;
 
 static void setup_opengl()
 {
-
+	/*
 	glPointParameterf  =	(PFNGLPOINTPARAMETERFEXTPROC)wglGetProcAddress("glPointParameterf");
 	glPointParameterfv =	(PFNGLPOINTPARAMETERFVEXTPROC)wglGetProcAddress("glPointParameterfv");
 
 	// Maybe I could try to use this? But breaks on AMD
 	pointSpritesSupported = (glPointParameterf && glPointParameterfv);
-
+	*/
 	pointSpritesSupported = false; // Turn it off! Slower in old GPUs (probably CPU emulated?)
 	// Since I am trying to optimize demo for Pentium 2 with old GeForce4MX, f*** point sprites and not well supported extensions!
 
@@ -184,7 +182,7 @@ int demoMain(int screenWidth, int screenHeight, bool isWindowed, bool hasVsync)
 
     bpp = info->vfmt->BitsPerPixel;
 
-    SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 32 );
+    SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 24 );
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 
     flags = SDL_OPENGL;
@@ -196,6 +194,7 @@ int demoMain(int screenWidth, int screenHeight, bool isWindowed, bool hasVsync)
 			quit_demo(1);
     }
 
+#ifdef WIN32
 	typedef void (APIENTRY *PFNWGLSWAPINTERVALEXTPROC)(int interval);
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)SDL_GL_GetProcAddress("wglSwapIntervalEXT");
 	if (wglSwapIntervalEXT) {
@@ -205,6 +204,7 @@ int demoMain(int screenWidth, int screenHeight, bool isWindowed, bool hasVsync)
 			wglSwapIntervalEXT(0);
 		}
 	}
+#endif
 
     setup_opengl();
 	Precalculations();
@@ -230,6 +230,7 @@ int demoMain(int screenWidth, int screenHeight, bool isWindowed, bool hasVsync)
 	return main(nCmdShow, (char**)lpCmdLine);
 }*/
 
+#ifdef WIN32
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, INT nCmdShow)
 {
 	fwzSettings setup;
@@ -248,3 +249,10 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	demoMain(setup.scrWidth, setup.scrHeight, setup.nWindowed, setup.nVsync);
 	return 0;
 }
+#else
+int main(void)
+{
+	demoMain(800, 600, 1, 1);
+	return 0;
+}
+#endif
