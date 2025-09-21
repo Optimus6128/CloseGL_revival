@@ -20,8 +20,10 @@ extern int partime;
 
 int k;
 
+/*
 PFNGLPOINTPARAMETERFEXTPROC			glPointParameterf			=NULL;
 PFNGLPOINTPARAMETERFVARBPROC		glPointParameterfv			=NULL;
+*/
 
 // ========= Setup =========
 
@@ -55,6 +57,7 @@ static void setup_opengl()
     glLoadIdentity();
     gluPerspective(60.0f, ratio, 1.0f, 4096.0f);
 
+	/*
 	if (pointSpritesSupported) {
 		glPointParameterf(GL_POINT_SIZE_MIN_EXT, 1.0);
 		glPointParameterf(GL_POINT_SIZE_MAX_EXT, 256.0);
@@ -62,6 +65,7 @@ static void setup_opengl()
 		glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION_ARB, quadratic);
 		glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE );
 	}
+	*/
 }
 
 

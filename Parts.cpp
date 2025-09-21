@@ -459,18 +459,18 @@ void P_Stars()
 
 	VS_Stars3d();
 
-	if (pointSpritesSupported) {
+	/*if (pointSpritesSupported) {
 		glEnable(GL_POINT_SPRITE_ARB);
 		glPointSize(2);
-	}
+	}*/
 	for (i=0; i<NSHAPES; i++)
 	{
 		shape[i].zfp = -fmodf(shape[i].zfpBase + globalTime/32.0f, 256.0f);
 		VS_Flower(shape[i]);
 	}
-	if (pointSpritesSupported) {
+	/*if (pointSpritesSupported) {
 		glDisable(GL_POINT_SPRITE_ARB);
-	}
+	}*/
 }
 
 
