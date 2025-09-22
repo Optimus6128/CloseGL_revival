@@ -189,7 +189,7 @@ void LoadObject2()
 	FILE *obj3d;
 	//float *kurasi;
 
-	obj3d=fopen("duck.3do","rb");
+	obj3d=fopen("data/duck.3do","rb");
 
 	unsigned char ca,cb,cc,cd;
 	unsigned int skata;
