@@ -17,15 +17,6 @@ GLuint texPolar;
 
 // ======= GL Texture Loading =======
 
-#ifdef WIN32
-AUX_RGBImageRec *LoadBMP(const char *Filename)
-{
-	FILE *File=NULL;
-	File=fopen(Filename,"r");
-	fclose(File);
-	return auxDIBImageLoad(Filename);
-}
-#else
 struct bmphdr {
 	/*char magic[2];*/					/* BM */
 	unsigned int filesz;
@@ -51,21 +42,21 @@ static void bswap32(unsigned int *val)
 	*val = (x << 24) | ((x & 0xff00) << 8) | ((x & 0xff0000) >> 8) | (x >> 24);
 }
 
-static int convbmp8(AUX_RGBImageRec *img, struct bmphdr *hdr, FILE *fp, const char *fname);
-static int convbmp24(AUX_RGBImageRec *img, struct bmphdr *hdr, FILE *fp, const char *fname);
+static int convbmp8(Image *img, struct bmphdr *hdr, FILE *fp, const char *fname);
+static int convbmp24(Image *img, struct bmphdr *hdr, FILE *fp, const char *fname);
 
-AUX_RGBImageRec *LoadBMP(const char *fname)
+Image *LoadBMP(const char *fname)
 {
 	char magic[2];
 	unsigned int infoffs, imgsize;
 	FILE *fp = 0;
-	AUX_RGBImageRec *img;
+	Image *img;
 	struct bmphdr hdr;
 	unsigned int bpp;
 
 	int bigend = (*(unsigned int*)"ABCD" == 0x41424344);
 
-	if(!(img = (AUX_RGBImageRec*)calloc(1, sizeof *img))) {
+	if(!(img = (Image*)calloc(1, sizeof *img))) {
 		goto err;
 	}
 	if(!(fp = fopen(fname, "rb"))) {
@@ -103,10 +94,10 @@ AUX_RGBImageRec *LoadBMP(const char *fname)
 	}
 	bpp = hdr.num_bits * hdr.num_planes;
 
-	img->sizeX = hdr.width;
-	img->sizeY = hdr.height;
+	img->width = hdr.width;
+	img->height = hdr.height;
 
-	if(!(img->data = (unsigned char*)malloc(hdr.width * hdr.height * 3))) {
+	if(!(img->pixels = (unsigned char*)malloc(hdr.width * hdr.height * 3))) {
 		fprintf(stderr, "%s: failed to allocate RGBA image (%dx%d)\n", fname,
 				hdr.width, hdr.height);
 		goto err;
@@ -136,7 +127,7 @@ AUX_RGBImageRec *LoadBMP(const char *fname)
 
 err:
 	if(img) {
-		free(img->data);
+		free(img->pixels);
 		free(img);
 	}
 	if(fp) fclose(fp);
@@ -144,7 +135,7 @@ err:
 
 }
 
-static int convbmp8(AUX_RGBImageRec *img, struct bmphdr *hdr, FILE *fp, const char *fname)
+static int convbmp8(Image *img, struct bmphdr *hdr, FILE *fp, const char *fname)
 {
 	unsigned int i, j, pitch, imgsize;
 	unsigned char *pixels, *src, *dst;
@@ -173,7 +164,7 @@ static int convbmp8(AUX_RGBImageRec *img, struct bmphdr *hdr, FILE *fp, const ch
 	}
 
 	src = pixels;
-	dst = (unsigned char*)img->data;
+	dst = (unsigned char*)img->pixels;
 	for(i=0; i<hdr->height; i++) {
 		for(j=0; j<hdr->width; j++) {
 			unsigned char *col = cmap + (src[j] << 2);
@@ -188,7 +179,7 @@ static int convbmp8(AUX_RGBImageRec *img, struct bmphdr *hdr, FILE *fp, const ch
 	return 0;
 }
 
-static int convbmp24(AUX_RGBImageRec *img, struct bmphdr *hdr, FILE *fp, const char *fname)
+static int convbmp24(Image *img, struct bmphdr *hdr, FILE *fp, const char *fname)
 {
 	unsigned int i, j, pitch, imgsize;
 	unsigned char *pptr;
@@ -198,13 +189,13 @@ static int convbmp24(AUX_RGBImageRec *img, struct bmphdr *hdr, FILE *fp, const c
 	pitch = (hdr->width * 3 + 3) & 0xfffffffc;
 	imgsize = hdr->height * pitch;
 
-	if(fread(img->data, 1, imgsize, fp) != imgsize) {
+	if(fread(img->pixels, 1, imgsize, fp) != imgsize) {
 		fprintf(stderr, "%s: EOF while reading image (%dx%d)\n", fname,
 				hdr->width, hdr->height);
 		return -1;
 	}
 
-	pptr = (unsigned char*)img->data;
+	pptr = (unsigned char*)img->pixels;
 	for(i=0; i<hdr->height; i++) {
 		for(j=0; j<hdr->width; j++) {
 			unsigned char tmp = pptr[0];
@@ -216,18 +207,17 @@ static int convbmp24(AUX_RGBImageRec *img, struct bmphdr *hdr, FILE *fp, const c
 	}
 	return 0;
 }
-#endif
 
 static unsigned char *fuckRgb;
 
 // The fucking weirdness of blueish around fonts (wtf? drivers???)
-static void hackFonts(AUX_RGBImageRec *texData)
+static void hackFonts(Image *texData)
 {
-	const int size = texData->sizeX * texData->sizeY;
+	const int size = texData->width * texData->height;
 
 	fuckRgb = new unsigned char[size * 4];
 
-	unsigned char *src = (unsigned char*)texData->data;
+	unsigned char *src = (unsigned char*)texData->pixels;
 	unsigned char *dst = fuckRgb;
 	for (int i=0; i<size; ++i) {
 		unsigned char r = *src++;
@@ -246,7 +236,7 @@ static void hackFonts(AUX_RGBImageRec *texData)
 void LoadGLTextures()
 {
 
-	AUX_RGBImageRec *TextureImage[ntex];
+	Image *TextureImage[ntex];
 	memset(TextureImage,0,sizeof(void *)*1);
 
 	TextureImage[0]=LoadBMP("Data/optimus.bmp");
@@ -270,13 +260,13 @@ void LoadGLTextures()
 
 		if (i!=4)
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[i]->sizeX, TextureImage[i]->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[i]->data);
+			glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[i]->width, TextureImage[i]->height, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[i]->pixels);
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 		}
 		else
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, 4, TextureImage[i]->sizeX, TextureImage[i]->sizeY, 0, GL_RGBA, GL_UNSIGNED_BYTE, fuckRgb);
+			glTexImage2D(GL_TEXTURE_2D, 0, 4, TextureImage[i]->width, TextureImage[i]->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, fuckRgb);
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
@@ -286,9 +276,9 @@ void LoadGLTextures()
 
 		if (TextureImage[i])							// If Texture Exists
 		{
-			if (TextureImage[i]->data)					// If Texture Image Exists
+			if (TextureImage[i]->pixels)					// If Texture Image Exists
 			{
-				free(TextureImage[i]->data);				// Free The Texture Image Memory
+				free(TextureImage[i]->pixels);				// Free The Texture Image Memory
 			}
 			free(TextureImage[i]);						// Free The Image Structure
 		}

@@ -5,7 +5,7 @@
 #include "precalcs.h"
 #include "Script.h"
 #include "Sound.h"
-#ifdef WIN32
+#ifdef _WIN32
 #include "fwzSetup.h"
 #endif
 
@@ -198,7 +198,7 @@ int demoMain(int screenWidth, int screenHeight, bool isWindowed, bool hasVsync)
 			quit_demo(1);
     }
 
-#ifdef WIN32
+#ifdef _WIN32
 	typedef void (APIENTRY *PFNWGLSWAPINTERVALEXTPROC)(int interval);
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)SDL_GL_GetProcAddress("wglSwapIntervalEXT");
 	if (wglSwapIntervalEXT) {
@@ -234,7 +234,7 @@ int demoMain(int screenWidth, int screenHeight, bool isWindowed, bool hasVsync)
 	return main(nCmdShow, (char**)lpCmdLine);
 }*/
 
-#ifdef WIN32
+#ifdef _WIN32
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, INT nCmdShow)
 {
 	fwzSettings setup;
@@ -254,9 +254,32 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	return 0;
 }
 #else
-int main(void)
+int main(int argc, char **argv)
 {
-	demoMain(800, 600, 1, 1);
+	int i;
+	int fs = 1;
+	int width = 800;
+	int height = 600;
+
+	for(i=1; i<argc; i++) {
+		if(strcmp(argv[i], "-w") == 0 || strcmp(argv[i], "-win") == 0 || strcmp(argv[i], "-windowed") == 0) {
+			fs = 0;
+		} else if(strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "-size") == 0) {
+			if(!argv[++i] || sscanf(argv[i], "%dx%d", &width, &height) != 2) {
+				fprintf(stderr, "%s must be followed by <WIDTH>x<HEIGHT>\n", argv[i - 1]);
+				return 1;
+			}
+		} else {
+			printf("Usage: %s [options]\n", argv[0]);
+			printf("Options:\n");
+			printf(" -w,-win: run in a window (default: fullscreen)\n");
+			printf(" -s,-size <WIDTH>x<HEIGHT>: window size/fullscreen resolution\n");
+			printf(" -h,-help: print usage information and exit\n\n");
+			return 0;
+		}
+	}
+
+	demoMain(width, height, !fs, 1);
 	return 0;
 }
 #endif

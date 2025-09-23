@@ -211,7 +211,7 @@ void LoadObject2()
 	FILE *obj3d;
 	//float *kurasi;
 
-	if(!(obj3d=fopen("duck.3do","rb"))) {
+	if(!(obj3d=fopen("Data/duck.3do","rb"))) {
 		fprintf(stderr, "failed to open duck.3do\n");
 		abort();
 	}
