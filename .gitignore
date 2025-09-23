@@ -1,6 +1,10 @@
 *.o
 *.swp
 closegl
-Data/
+*.exe
 *.json
 .cache/
+*.a
+Release/
+Debug/
+*.user
