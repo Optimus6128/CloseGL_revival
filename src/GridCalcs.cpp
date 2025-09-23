@@ -453,8 +453,8 @@ void GC_Water()
 }
 
 
-static float sinPhiTab[180/spy];
-static float cosPhiTab[180/spy];
+static float sinPhiTab[180];
+static float cosPhiTab[180];
 
 static void initGC_Spherical()
 {
