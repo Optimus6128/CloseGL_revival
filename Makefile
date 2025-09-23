@@ -3,7 +3,7 @@ LDFLAGS_sys = -lasound
 
 # --- uncomment for IRIX build ---
 #CXXFLAGS_sys = -I/usr/nekoware/include -I/usr/tgcware/include
-#LDFLAGS_sys = -L/usr/nekoware/lib -L/usr/tgcware/lib
+#LDFLAGS_sys = -L/usr/nekoware/lib -L/usr/tgcware/lib -laudio -lpthread
 
 obj = src/Controls.o src/GridCalcs.o src/Parts.o src/Precalcs.o src/Script.o \
 	  src/SdlOpenGL.o src/Sound.o src/TextureLoad.o src/VertexSend.o
