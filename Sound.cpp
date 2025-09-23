@@ -32,7 +32,7 @@ void SoundInit()
 void PlaySong()
 {
 #ifdef MUSIC_ON
-    mod = FMUSIC_LoadSong("data/sl-star3.xm");
+    mod = FMUSIC_LoadSong("sl-star3.xm");
     if (!mod)
     {
         printf("%s\n", FMOD_ErrorString(FSOUND_GetError()));
