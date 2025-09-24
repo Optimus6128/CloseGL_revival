@@ -1,9 +1,9 @@
 # --- uncomment for GNU/Linux build ---
-LDFLAGS_sys = -lasound
+LDFLAGS_sys = -lpthread
 
 # --- uncomment for IRIX build ---
 #CXXFLAGS_sys = -I/usr/nekoware/include -I/usr/tgcware/include
-#LDFLAGS_sys = -L/usr/nekoware/lib -L/usr/tgcware/lib -laudio -lpthread
+#LDFLAGS_sys = -L/usr/nekoware/lib -L/usr/tgcware/lib -lpthread
 
 obj = src/Controls.o src/GridCalcs.o src/Parts.o src/Precalcs.o src/Script.o \
 	  src/SdlOpenGL.o src/Sound.o src/TextureLoad.o src/VertexSend.o
