@@ -159,47 +159,47 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\Controls.cpp"
+				RelativePath=".\src\Controls.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\fwzSetup.cpp"
+				RelativePath=".\src\fwzSetup.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\GridCalcs.cpp"
+				RelativePath=".\src\GridCalcs.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Parts.cpp"
+				RelativePath=".\src\Parts.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\precalcs.cpp"
+				RelativePath=".\src\precalcs.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\resource.h"
+				RelativePath=".\src\resource.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Script.cpp"
+				RelativePath=".\src\Script.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\SdlOpenGL.cpp"
+				RelativePath=".\src\SdlOpenGL.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Sound.cpp"
+				RelativePath=".\src\Sound.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\TextureLoad.cpp"
+				RelativePath=".\src\TextureLoad.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\VertexSend.cpp"
+				RelativePath=".\src\VertexSend.cpp"
 				>
 			</File>
 		</Filter>
@@ -209,43 +209,43 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\CONTROLS.H"
+				RelativePath=".\src\CONTROLS.H"
 				>
 			</File>
 			<File
-				RelativePath=".\fwzSetup.h"
+				RelativePath=".\src\fwzSetup.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Glext.h"
+				RelativePath=".\src\Glext.h"
 				>
 			</File>
 			<File
-				RelativePath=".\GridCalcs.h"
+				RelativePath=".\src\GridCalcs.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Parts.h"
+				RelativePath=".\src\Parts.h"
 				>
 			</File>
 			<File
-				RelativePath=".\PRECALCS.H"
+				RelativePath=".\src\PRECALCS.H"
 				>
 			</File>
 			<File
-				RelativePath=".\Script.h"
+				RelativePath=".\src\Script.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Sound.h"
+				RelativePath=".\src\Sound.h"
 				>
 			</File>
 			<File
-				RelativePath=".\TextureLoad.h"
+				RelativePath=".\src\TextureLoad.h"
 				>
 			</File>
 			<File
-				RelativePath=".\VertexSend.h"
+				RelativePath=".\src\VertexSend.h"
 				>
 			</File>
 		</Filter>
