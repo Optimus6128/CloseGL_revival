@@ -1,9 +1,5 @@
-# --- uncomment for GNU/Linux build ---
-LDFLAGS_sys = -lpthread
-
-# --- uncomment for IRIX build ---
-#CXXFLAGS_sys = -I/usr/nekoware/include -I/usr/tgcware/include
-#LDFLAGS_sys = -L/usr/nekoware/lib -L/usr/tgcware/lib -lpthread
+CXXFLAGS_sys = `sdl-config --cflags | sed 's/include\/SDL/include/'`
+LDFLAGS_sys = `sdl-config --libs` -lpthread
 
 obj = src/Controls.o src/GridCalcs.o src/Parts.o src/Precalcs.o src/Script.o \
 	  src/SdlOpenGL.o src/Sound.o src/TextureLoad.o src/VertexSend.o

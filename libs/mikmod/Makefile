@@ -9,10 +9,10 @@ obj = depackers/mmcmp.o depackers/pp20.o depackers/s404.o depackers/xpk.o \
 
 alib = libmikmod.a
 
-def = -DHAVE_CONFIG_H -DMIKMOD_BUILD -DNO_SDL_CONFIG
+def = -DHAVE_CONFIG_H -DMIKMOD_BUILD
 inc = -I. -Iinclude
 opt = -O3
-CFLAGS = $(opt) $(def) $(inc)
+CFLAGS = $(opt) $(def) $(inc) `sdl-config --cflags`
 
 $(alib): $(obj)
 	$(AR) rcs $@ $(obj)
