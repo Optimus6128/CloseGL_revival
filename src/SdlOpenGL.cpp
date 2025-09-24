@@ -167,7 +167,7 @@ int demoMain(int screenWidth, int screenHeight, bool isWindowed, bool hasVsync)
     int bpp = 0;
     int flags = 0;
 
-    if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
+    if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO ) < 0 ) {
         fprintf( stderr, "Video initialization failed: %s\n",
             SDL_GetError( ) );
 			quit_demo(1);

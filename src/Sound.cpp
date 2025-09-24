@@ -16,30 +16,16 @@ static DWORD WINAPI upd_thread(void *cls);
 #include <unistd.h>
 
 static void *update(void *cls);
+#endif
+
 
 MODULE *mikmod;
-#endif
 
 
 void SoundInit()
 {
-#if defined(__linux__) && !defined(__ANDROID__)
-	MikMod_RegisterDriver(&drv_alsa);
-#elif defined(__FreeBSD__)
-	MikMod_RegisterDriver(&drv_oss);
-#elif defined(__sgi)
-	MikMod_RegisterDriver(&drv_sgi);
-#elif defined(__sun)
-	MikMod_RegisterDriver(&drv_sun);
-#elif defined(_WIN32)
-	MikMod_RegisterDriver(&drv_ds);
-#elif defined(__APPLE__)
-	MikMod_RegisterDriver(&drv_osx);
-#elif defined(__ANDROID__)
-	MikMod_RegisterDriver(&drv_osles);
-#else
+	MikMod_RegisterDriver(&drv_sdl);
 	MikMod_RegisterDriver(&drv_nos);
-#endif
 
 	MikMod_RegisterLoader(&load_xm);
 

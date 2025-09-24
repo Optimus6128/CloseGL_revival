@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="sdlOpenGL2005"
-	ProjectGUID="{4006674A-E5FE-4BA2-9361-E13AB4716985}"
-	RootNamespace="sdlOpenGL2005"
+	Name="mikmod"
+	ProjectGUID="{71BE56CB-5A0C-4653-BF1E-9D7E49F17E64}"
+	RootNamespace="mikmod"
 	>
 	<Platforms>
 		<Platform
@@ -18,7 +18,7 @@
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
+			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -37,9 +37,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="libs\mikmod\include"
-				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-				DebugInformationFormat="3"
+				AdditionalIncludeDirectories="include;&quot;$(ProjectDir)&quot;"
+				PreprocessorDefinitions="HAVE_CONFIG_H;NO_SDL_CONFIG"
+				DisableSpecificWarnings="4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -51,16 +51,10 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="mikmod.lib SDL.lib OpenGL32.lib glu32.lib"
-				AdditionalLibraryDirectories="&quot;$(IntDir)&quot;"
-				GenerateDebugInformation="true"
+				Name="VCLibrarianTool"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -70,12 +64,6 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -85,7 +73,7 @@
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
+			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -104,14 +92,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
-				InlineFunctionExpansion="0"
-				EnableIntrinsicFunctions="false"
-				OmitFramePointers="false"
-				EnableFiberSafeOptimizations="false"
-				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="libs\mikmod\include"
-				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
+				AdditionalIncludeDirectories="include;&quot;$(ProjectDir)&quot;"
+				PreprocessorDefinitions="HAVE_CONFIG_H;NO_SDL_CONFIG"
+				DisableSpecificWarnings="4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -123,19 +106,10 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="mikmod.lib SDL.lib OpenGL32.lib glu32.lib"
-				AdditionalLibraryDirectories="&quot;$(IntDir)&quot;"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				OptimizeForWindows98="2"
-				LinkTimeCodeGeneration="0"
+				Name="VCLibrarianTool"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -145,12 +119,6 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -161,111 +129,129 @@
 	</References>
 	<Files>
 		<Filter
-			Name="Source Files"
-			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			Name="src"
 			>
 			<File
-				RelativePath=".\src\Controls.cpp"
+				RelativePath=".\drivers\drv_nos.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\fwzSetup.cpp"
+				RelativePath=".\drivers\drv_sdl.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\GridCalcs.cpp"
+				RelativePath=".\loaders\load_xm.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\Parts.cpp"
+				RelativePath=".\playercode\mdreg.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\precalcs.cpp"
+				RelativePath=".\playercode\mdriver.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\resource.h"
+				RelativePath=".\playercode\mdulaw.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\Script.cpp"
+				RelativePath=".\playercode\mloader.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\SdlOpenGL.cpp"
+				RelativePath=".\playercode\mlreg.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\Sound.cpp"
+				RelativePath=".\playercode\mlutil.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\TextureLoad.cpp"
+				RelativePath=".\mmio\mmalloc.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\VertexSend.cpp"
+				RelativePath=".\depackers\mmcmp.c"
+				>
+			</File>
+			<File
+				RelativePath=".\mmio\mmerror.c"
+				>
+			</File>
+			<File
+				RelativePath=".\mmio\mmio.c"
+				>
+			</File>
+			<File
+				RelativePath=".\playercode\mplayer.c"
+				>
+			</File>
+			<File
+				RelativePath=".\playercode\munitrk.c"
+				>
+			</File>
+			<File
+				RelativePath=".\playercode\mwav.c"
+				>
+			</File>
+			<File
+				RelativePath=".\playercode\npertab.c"
+				>
+			</File>
+			<File
+				RelativePath=".\depackers\pp20.c"
+				>
+			</File>
+			<File
+				RelativePath=".\depackers\s404.c"
+				>
+			</File>
+			<File
+				RelativePath=".\playercode\sloader.c"
+				>
+			</File>
+			<File
+				RelativePath=".\posix\strccmp.c"
+				>
+			</File>
+			<File
+				RelativePath=".\playercode\virtch.c"
+				>
+			</File>
+			<File
+				RelativePath=".\playercode\virtch2.c"
+				>
+			</File>
+			<File
+				RelativePath=".\playercode\virtch_common.c"
+				>
+			</File>
+			<File
+				RelativePath=".\depackers\xpk.c"
 				>
 			</File>
 		</Filter>
 		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			Name="include"
 			>
 			<File
-				RelativePath=".\src\CONTROLS.H"
+				RelativePath=".\include\mikmod.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\fwzSetup.h"
+				RelativePath=".\include\mikmod_ctype.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\Glext.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\GridCalcs.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\Parts.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\PRECALCS.H"
-				>
-			</File>
-			<File
-				RelativePath=".\src\Script.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\Sound.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\TextureLoad.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\VertexSend.h"
+				RelativePath=".\include\mikmod_internals.h"
 				>
 			</File>
 		</Filter>
-		<Filter
-			Name="Resource Files"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
+		<File
+			RelativePath=".\config.h"
 			>
-			<File
-				RelativePath=".\FWZ.rc"
-				>
-			</File>
-		</Filter>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

@@ -9,14 +9,14 @@ obj = src/Controls.o src/GridCalcs.o src/Parts.o src/Precalcs.o src/Script.o \
 	  src/SdlOpenGL.o src/Sound.o src/TextureLoad.o src/VertexSend.o
 bin = closegl
 
-incdir = -I/usr/local/include
+incdir = -Ilibs/mikmod/include -I/usr/local/include
 libdir = -L/usr/local/lib
 mikmod = libs/mikmod/libmikmod.a
 
 CXXFLAGS = -O3 -g3 $(incdir) $(CXXFLAGS_sys)
 LDFLAGS = $(libdir) $(mikmod) $(LDFLAGS_sys) -lGL -lGLU -lSDL -lm
 
-$(bin): $(obj) $(mikmod)
+$(bin): $(mikmod) $(obj)
 	$(CXX) -o $@ $(obj) $(LDFLAGS)
 
 .SUFFIXES: .cpp

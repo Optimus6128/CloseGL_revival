@@ -1,7 +1,7 @@
 #ifndef MIKMOD_CONFIG_H_
 #define MIKMOD_CONFIG_H_
 
-#define HAVE_INTTYPES_H 1
+/*#define HAVE_INTTYPES_H 1*/
 #define HAVE_LIMITS_H 1
 #define HAVE_MALLOC_H 1
 #define HAVE_MEMCMP 1
@@ -9,7 +9,7 @@
 #define HAVE_POSIX_MEMALIGN 1
 #define HAVE_SETENV 1
 #define HAVE_STDLIB_H 1
-#define HAVE_STRINGS_H 1
+/*#define HAVE_STRINGS_H 1*/
 #define HAVE_STRING_H 1
 #define HAVE_STRSTR 1
 
@@ -32,43 +32,7 @@
 
 #define STDC_HEADERS 1
 
-#if defined(__linux__) && !defined(__ANDROID__)
-#define DRV_ALSA	1
-#endif
-
-#ifdef __FreeBSD__
-#define DRV_OSS		1
-#define HAVE_SYS_SOUNDCARD_H
-#endif
-
-#ifdef __sgi
-#define DRV_SGI		1
-#endif
-
-#ifdef __sun
-#define DRV_SUN		1
-#endif
-
-#ifdef _WIN32
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-/* old windows build with msvc6 uses SDL */
 #define DRV_SDL	1
-#else
-/* for modern windows use directsound */
-#define DRV_DS	1
-#endif
-#endif
 
-#ifdef __EMSCRIPTEN__
-#define DRV_SDL	1
-#endif
-
-#ifdef __APPLE__
-#define DRV_OSX	1
-#endif
-
-#ifdef __ANDROID__
-#define DRV_OSLES 1
-#endif
 
 #endif	/* MIKMOD_CONFIG_H_ */
