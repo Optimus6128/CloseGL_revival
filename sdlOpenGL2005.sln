@@ -2,6 +2,11 @@
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sdlOpenGL2005", "sdlOpenGL2005.vcproj", "{4006674A-E5FE-4BA2-9361-E13AB4716985}"
+	ProjectSection(ProjectDependencies) = postProject
+		{71BE56CB-5A0C-4653-BF1E-9D7E49F17E64} = {71BE56CB-5A0C-4653-BF1E-9D7E49F17E64}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mikmod", "libs\mikmod\mikmod.vcproj", "{71BE56CB-5A0C-4653-BF1E-9D7E49F17E64}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,6 +18,10 @@ Global
 		{4006674A-E5FE-4BA2-9361-E13AB4716985}.Debug|Win32.Build.0 = Debug|Win32
 		{4006674A-E5FE-4BA2-9361-E13AB4716985}.Release|Win32.ActiveCfg = Release|Win32
 		{4006674A-E5FE-4BA2-9361-E13AB4716985}.Release|Win32.Build.0 = Release|Win32
+		{71BE56CB-5A0C-4653-BF1E-9D7E49F17E64}.Debug|Win32.ActiveCfg = Debug|Win32
+		{71BE56CB-5A0C-4653-BF1E-9D7E49F17E64}.Debug|Win32.Build.0 = Debug|Win32
+		{71BE56CB-5A0C-4653-BF1E-9D7E49F17E64}.Release|Win32.ActiveCfg = Release|Win32
+		{71BE56CB-5A0C-4653-BF1E-9D7E49F17E64}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

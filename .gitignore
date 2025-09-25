@@ -1,0 +1,10 @@
+*.o
+*.swp
+closegl
+*.exe
+*.json
+.cache/
+*.a
+Release/
+Debug/
+*.user
